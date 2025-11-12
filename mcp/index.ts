@@ -285,7 +285,7 @@ export default function createServer({ config }: { config: Config }) {
   const server = new Server(
     {
       name: 'joeapi-mcp',
-      version: '1.0.1',
+      version: '1.0.2',
     },
     {
       capabilities: {
@@ -432,10 +432,21 @@ export default function createServer({ config }: { config: Config }) {
         }
 
         case 'create_action_item': {
-          result = await callJoeAPI(baseUrl, '/api/v1/actionitems', {
+          // Debug: Log the request
+          console.error('[DEBUG] Creating action item:', JSON.stringify(args));
+          const createResult: any = await callJoeAPI(baseUrl, '/api/v1/actionitems', {
             method: 'POST',
             body: JSON.stringify(args),
           });
+          console.error('[DEBUG] Create response:', JSON.stringify(createResult));
+
+          // Validate we got a create response, not a list response
+          if (createResult.data && Array.isArray(createResult.data)) {
+            console.error('[ERROR] Got list response instead of create response!');
+            throw new Error('API returned list instead of created item. This is likely a server-side issue.');
+          }
+
+          result = createResult;
           break;
         }
 
