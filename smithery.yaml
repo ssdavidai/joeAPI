@@ -1,0 +1,9 @@
+# Smithery MCP Server Configuration
+# Documentation: https://smithery.ai/docs/build/project-config/smithery-yaml
+
+runtime: "typescript"
+
+env:
+  NODE_ENV: "production"
+  # JoeAPI base URL - update this to your deployed API URL
+  JOEAPI_BASE_URL: "http://localhost:8080"

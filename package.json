@@ -8,7 +8,10 @@
     "dev": "nodemon src/server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "verify-db": "node scripts/verify-db.js"
+    "verify-db": "node scripts/verify-db.js",
+    "mcp:build": "tsc --project tsconfig.mcp.json",
+    "mcp:dev": "tsx mcp/index.ts",
+    "mcp:start": "node mcp-build/index.js"
   },
   "keywords": [
     "construction",
@@ -19,19 +22,24 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "mssql": "^10.0.1",
+    "@modelcontextprotocol/sdk": "^1.21.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "helmet": "^7.1.0",
-    "cors": "^2.8.5",
-    "uuid": "^9.0.1"
+    "mssql": "^10.0.1",
+    "uuid": "^9.0.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
+    "@types/node": "^24.10.1",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3"
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }
