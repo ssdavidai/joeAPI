@@ -3,7 +3,5 @@
 
 runtime: "typescript"
 
-env:
-  NODE_ENV: "production"
-  # JoeAPI base URL - update this to your deployed API URL
-  JOEAPI_BASE_URL: "http://localhost:8080"
+# Note: Update JOEAPI_BASE_URL to your production API URL before deployment
+# Users will be able to configure this when they install the server

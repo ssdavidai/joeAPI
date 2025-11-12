@@ -1,9 +1,7 @@
-#!/usr/bin/env node
-
 /**
- * JoeAPI MCP Server
+ * JoeAPI MCP Server for Smithery
  *
- * Exposes JoeAPI construction management system as MCP tools
+ * Exposes JoeAPI construction management system as MCP tools via Smithery.
  * Allows Claude and other AI assistants to interact with:
  * - Clients, Contacts, SubContractors
  * - Proposals, ProposalLines, Estimates
@@ -12,7 +10,6 @@
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -20,11 +17,20 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-const JOEAPI_BASE_URL = process.env.JOEAPI_BASE_URL || 'http://localhost:8080';
+// Configuration schema for Smithery
+export const configSchema = z.object({
+  JOEAPI_BASE_URL: z
+    .string()
+    .url()
+    .default('http://localhost:8080')
+    .describe('Base URL for JoeAPI server'),
+});
+
+type Config = z.infer<typeof configSchema>;
 
 // Helper function to call JoeAPI
-async function callJoeAPI(endpoint: string, options: RequestInit = {}) {
-  const url = `${JOEAPI_BASE_URL}${endpoint}`;
+async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestInit = {}) {
+  const url = `${baseUrl}${endpoint}`;
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -271,231 +277,226 @@ const tools: Tool[] = [
   },
 ];
 
-// Create MCP server
-const server = new Server(
-  {
-    name: 'joeapi-mcp',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
+// Default export: function that creates the MCP server
+export default function createServer({ config }: { config: Config }) {
+  const baseUrl = config.JOEAPI_BASE_URL;
+
+  // Create MCP server
+  const server = new Server(
+    {
+      name: 'joeapi-mcp',
+      version: '1.0.0',
     },
-  }
-);
-
-// List available tools
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools,
-}));
-
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-
-  try {
-    let result: any;
-
-    switch (name) {
-      // ===== CLIENTS =====
-      case 'list_clients': {
-        const { page = 1, limit = 20, search = '' } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(search && { search }),
-        });
-        result = await callJoeAPI(`/api/v1/clients?${queryParams}`);
-        break;
-      }
-
-      case 'get_client': {
-        const { id } = args as { id: string };
-        result = await callJoeAPI(`/api/v1/clients/${id}`);
-        break;
-      }
-
-      case 'create_client': {
-        result = await callJoeAPI('/api/v1/clients', {
-          method: 'POST',
-          body: JSON.stringify(args),
-        });
-        break;
-      }
-
-      // ===== CONTACTS =====
-      case 'list_contacts': {
-        const { page = 1, limit = 20, search = '', includeInactive = false } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(search && { search }),
-          includeInactive: String(includeInactive),
-        });
-        result = await callJoeAPI(`/api/v1/contacts?${queryParams}`);
-        break;
-      }
-
-      case 'create_contact': {
-        result = await callJoeAPI('/api/v1/contacts', {
-          method: 'POST',
-          body: JSON.stringify(args),
-        });
-        break;
-      }
-
-      // ===== SUBCONTRACTORS =====
-      case 'list_subcontractors': {
-        const { page = 1, limit = 20, search = '', category = '', includeInactive = false } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(search && { search }),
-          ...(category && { category }),
-          includeInactive: String(includeInactive),
-        });
-        result = await callJoeAPI(`/api/v1/subcontractors?${queryParams}`);
-        break;
-      }
-
-      // ===== PROPOSALS =====
-      case 'list_proposals': {
-        const { page = 1, limit = 20, clientId = '', includeDeleted = false, includeArchived = false } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(clientId && { clientId }),
-          includeDeleted: String(includeDeleted),
-          includeArchived: String(includeArchived),
-        });
-        result = await callJoeAPI(`/api/v1/proposals?${queryParams}`);
-        break;
-      }
-
-      case 'get_proposal': {
-        const { id } = args as { id: string };
-        result = await callJoeAPI(`/api/v1/proposals/${id}`);
-        break;
-      }
-
-      // ===== PROPOSAL LINES =====
-      case 'list_proposal_lines': {
-        const { page = 1, limit = 20, proposalId = '' } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(proposalId && { proposalId }),
-        });
-        result = await callJoeAPI(`/api/v1/proposallines?${queryParams}`);
-        break;
-      }
-
-      // ===== ESTIMATES =====
-      case 'list_estimates': {
-        const { page = 1, limit = 20 } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-        });
-        result = await callJoeAPI(`/api/v1/estimates?${queryParams}`);
-        break;
-      }
-
-      // ===== ACTION ITEMS =====
-      case 'list_action_items': {
-        const { page = 1, limit = 20, projectId = '', includeDeleted = false, includeArchived = false } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(projectId && { projectId }),
-          includeDeleted: String(includeDeleted),
-          includeArchived: String(includeArchived),
-        });
-        result = await callJoeAPI(`/api/v1/actionitems?${queryParams}`);
-        break;
-      }
-
-      case 'get_action_item': {
-        const { id } = args as { id: number };
-        result = await callJoeAPI(`/api/v1/actionitems/${id}`);
-        break;
-      }
-
-      case 'create_action_item': {
-        result = await callJoeAPI('/api/v1/actionitems', {
-          method: 'POST',
-          body: JSON.stringify(args),
-        });
-        break;
-      }
-
-      // ===== PROJECT SCHEDULES =====
-      case 'list_project_schedules': {
-        const { page = 1, limit = 20 } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-        });
-        result = await callJoeAPI(`/api/v1/projectschedules?${queryParams}`);
-        break;
-      }
-
-      // ===== PROJECT SCHEDULE TASKS =====
-      case 'list_project_schedule_tasks': {
-        const { page = 1, limit = 20, scheduleId = '' } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-          ...(scheduleId && { scheduleId }),
-        });
-        result = await callJoeAPI(`/api/v1/projectscheduletasks?${queryParams}`);
-        break;
-      }
-
-      // ===== PROJECT MANAGEMENTS =====
-      case 'list_project_managements': {
-        const { page = 1, limit = 20 } = args as any;
-        const queryParams = new URLSearchParams({
-          page: String(page),
-          limit: String(limit),
-        });
-        result = await callJoeAPI(`/api/v1/projectmanagements?${queryParams}`);
-        break;
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
+    {
+      capabilities: {
+        tools: {},
+      },
     }
+  );
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-});
+  // List available tools
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools,
+  }));
 
-// Start the server
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('JoeAPI MCP Server running on stdio');
+  // Handle tool calls
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+
+    try {
+      let result: any;
+
+      switch (name) {
+        // ===== CLIENTS =====
+        case 'list_clients': {
+          const { page = 1, limit = 20, search = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(search && { search }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/clients?${queryParams}`);
+          break;
+        }
+
+        case 'get_client': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/clients/${id}`);
+          break;
+        }
+
+        case 'create_client': {
+          result = await callJoeAPI(baseUrl, '/api/v1/clients', {
+            method: 'POST',
+            body: JSON.stringify(args),
+          });
+          break;
+        }
+
+        // ===== CONTACTS =====
+        case 'list_contacts': {
+          const { page = 1, limit = 20, search = '', includeInactive = false } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(search && { search }),
+            includeInactive: String(includeInactive),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/contacts?${queryParams}`);
+          break;
+        }
+
+        case 'create_contact': {
+          result = await callJoeAPI(baseUrl, '/api/v1/contacts', {
+            method: 'POST',
+            body: JSON.stringify(args),
+          });
+          break;
+        }
+
+        // ===== SUBCONTRACTORS =====
+        case 'list_subcontractors': {
+          const { page = 1, limit = 20, search = '', category = '', includeInactive = false } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(search && { search }),
+            ...(category && { category }),
+            includeInactive: String(includeInactive),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/subcontractors?${queryParams}`);
+          break;
+        }
+
+        // ===== PROPOSALS =====
+        case 'list_proposals': {
+          const { page = 1, limit = 20, clientId = '', includeDeleted = false, includeArchived = false } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(clientId && { clientId }),
+            includeDeleted: String(includeDeleted),
+            includeArchived: String(includeArchived),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/proposals?${queryParams}`);
+          break;
+        }
+
+        case 'get_proposal': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/proposals/${id}`);
+          break;
+        }
+
+        // ===== PROPOSAL LINES =====
+        case 'list_proposal_lines': {
+          const { page = 1, limit = 20, proposalId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(proposalId && { proposalId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/proposallines?${queryParams}`);
+          break;
+        }
+
+        // ===== ESTIMATES =====
+        case 'list_estimates': {
+          const { page = 1, limit = 20 } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/estimates?${queryParams}`);
+          break;
+        }
+
+        // ===== ACTION ITEMS =====
+        case 'list_action_items': {
+          const { page = 1, limit = 20, projectId = '', includeDeleted = false, includeArchived = false } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(projectId && { projectId }),
+            includeDeleted: String(includeDeleted),
+            includeArchived: String(includeArchived),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems?${queryParams}`);
+          break;
+        }
+
+        case 'get_action_item': {
+          const { id } = args as { id: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${id}`);
+          break;
+        }
+
+        case 'create_action_item': {
+          result = await callJoeAPI(baseUrl, '/api/v1/actionitems', {
+            method: 'POST',
+            body: JSON.stringify(args),
+          });
+          break;
+        }
+
+        // ===== PROJECT SCHEDULES =====
+        case 'list_project_schedules': {
+          const { page = 1, limit = 20 } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/projectschedules?${queryParams}`);
+          break;
+        }
+
+        // ===== PROJECT SCHEDULE TASKS =====
+        case 'list_project_schedule_tasks': {
+          const { page = 1, limit = 20, scheduleId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(scheduleId && { scheduleId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/projectscheduletasks?${queryParams}`);
+          break;
+        }
+
+        // ===== PROJECT MANAGEMENTS =====
+        case 'list_project_managements': {
+          const { page = 1, limit = 20 } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/projectmanagements?${queryParams}`);
+          break;
+        }
+
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  });
+
+  return server;
 }
-
-main().catch((error) => {
-  console.error('Fatal error:', error);
-  process.exit(1);
-});
