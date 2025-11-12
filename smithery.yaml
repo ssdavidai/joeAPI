@@ -3,5 +3,7 @@
 
 runtime: "typescript"
 
-# Note: Update JOEAPI_BASE_URL to your production API URL before deployment
-# Users will be able to configure this when they install the server
+# Default environment variables
+# Users can override these when they install the server
+env:
+  JOEAPI_BASE_URL: "https://joeapi.fly.dev"

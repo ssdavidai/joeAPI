@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+PROJECT_PLAN.md
+PHASE2_COMPLETE.md
+MCP_README.md
+tests
+.DS_Store
+*.md
+mcp
+mcp-build
+tsconfig.mcp.json
+claude_desktop_config.example.json
+smithery.yaml
