@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "joeapi-local": {
+      "command": "npm",
+      "args": ["run", "mcp:local"],
+      "cwd": "/Users/Shared/dev/workbench/joeapi",
+      "env": {
+        "JOEAPI_BASE_URL": "http://localhost:8080"
+      }
+    }
+  }
+}

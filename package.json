@@ -11,8 +11,8 @@
     "test:watch": "jest --watch",
     "verify-db": "node scripts/verify-db.js",
     "mcp:build": "tsc --project tsconfig.mcp.json",
-    "mcp:dev": "tsx mcp/index.ts",
-    "mcp:start": "node mcp-build/index.js"
+    "mcp:local": "tsx mcp/local-server.ts",
+    "mcp:start": "node mcp-build/local-server.js"
   },
   "keywords": [
     "construction",
