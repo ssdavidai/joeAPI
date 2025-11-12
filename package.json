@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Construction Management REST API for chaconstruction-test database",
   "main": "src/server.js",
+  "module": "./mcp/index.ts",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
