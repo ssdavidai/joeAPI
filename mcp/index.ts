@@ -520,6 +520,249 @@ const tools: Tool[] = [
       },
     },
   },
+
+  // ===== TIER 2: FINANCIAL & ANALYTICS =====
+
+  // ===== TRANSACTIONS =====
+  {
+    name: 'list_transactions',
+    description: 'Get QB transaction history with filters for project, account, date range, and transaction type',
+    annotations: { category: 'Financial', subcategory: 'Transactions' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+        accountId: { type: 'string', description: 'Filter by account ID (GUID)' },
+        startDate: { type: 'string', description: 'Start date filter (ISO 8601 format)' },
+        endDate: { type: 'string', description: 'End date filter (ISO 8601 format)' },
+        transactionType: { type: 'string', description: 'Filter by transaction type (e.g., Bill, Check, Receipt)' },
+      },
+    },
+  },
+  {
+    name: 'get_transaction_summary',
+    description: 'Get aggregated transaction summaries grouped by project, account, vendor, or month',
+    annotations: { category: 'Financial', subcategory: 'Transactions' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        groupBy: { type: 'string', description: 'Group by: project, account, vendor, or month' },
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+        startDate: { type: 'string', description: 'Start date filter (ISO 8601 format)' },
+        endDate: { type: 'string', description: 'End date filter (ISO 8601 format)' },
+      },
+      required: ['groupBy'],
+    },
+  },
+
+  // ===== JOB BALANCES =====
+  {
+    name: 'list_job_balances',
+    description: 'Get job-level financial balances showing current balance, receivables, and collected amounts',
+    annotations: { category: 'Financial', subcategory: 'Job Balances' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        projectId: { type: 'string', description: 'Filter by specific project ID (GUID)' },
+      },
+    },
+  },
+
+  // ===== COST VARIANCE =====
+  {
+    name: 'get_cost_variance',
+    description: 'Calculate cost variance by comparing original/revised estimates against actual costs from transactions',
+    annotations: { category: 'Analytics', subcategory: 'Cost Analysis' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+        categoryId: { type: 'string', description: 'Filter by estimate category ID (GUID)' },
+      },
+    },
+  },
+
+  // ===== INVOICES =====
+  {
+    name: 'list_invoices',
+    description: 'Get paginated list of invoices with filtering by client, status, and date range',
+    annotations: { category: 'Financial', subcategory: 'Invoices' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        clientId: { type: 'string', description: 'Filter by client ID (GUID)' },
+        status: { type: 'string', description: 'Filter by status (e.g., Paid, Unpaid, Overdue)' },
+        startDate: { type: 'string', description: 'Start date filter (ISO 8601 format)' },
+        endDate: { type: 'string', description: 'End date filter (ISO 8601 format)' },
+      },
+    },
+  },
+  {
+    name: 'get_invoice',
+    description: 'Get a specific invoice by ID with all line items',
+    annotations: { category: 'Financial', subcategory: 'Invoices' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Invoice ID (GUID)' },
+      },
+      required: ['id'],
+    },
+  },
+
+  // ===== SCHEDULE REVISIONS =====
+  {
+    name: 'list_schedule_revisions',
+    description: 'Get schedule revision history showing how schedules have changed over time',
+    annotations: { category: 'Projects', subcategory: 'Schedule Tracking' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+      },
+    },
+  },
+  {
+    name: 'get_schedule_revision',
+    description: 'Get a specific schedule revision by ID with all revision items',
+    annotations: { category: 'Projects', subcategory: 'Schedule Tracking' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Schedule revision ID (GUID)' },
+      },
+      required: ['id'],
+    },
+  },
+
+  // ===== PROJECT DETAILS =====
+  {
+    name: 'get_project_details',
+    description: 'Get comprehensive project overview combining schedule, financial status, team, and recent activity',
+    annotations: { category: 'Projects', subcategory: 'Overview' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Project ID (GUID)' },
+      },
+      required: ['id'],
+    },
+  },
+
+  // ===== PROPOSAL PIPELINE =====
+  {
+    name: 'get_proposal_pipeline',
+    description: 'Get sales pipeline analytics including conversion rates, proposal status breakdown, and recent activity',
+    annotations: { category: 'Analytics', subcategory: 'Sales Pipeline' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        startDate: { type: 'string', description: 'Start date filter (ISO 8601 format)' },
+        endDate: { type: 'string', description: 'End date filter (ISO 8601 format)' },
+      },
+    },
+  },
+
+  // ===== ESTIMATE REVISIONS =====
+  {
+    name: 'get_estimate_revision_history',
+    description: 'Get estimate revision history showing how estimates changed and calculate average overage percentage',
+    annotations: { category: 'Analytics', subcategory: 'Cost Analysis' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+      },
+    },
+  },
+
+  // ===== COST REVISIONS =====
+  {
+    name: 'list_cost_revisions',
+    description: 'Get detailed cost revision history from the CostRevisions table',
+    annotations: { category: 'Analytics', subcategory: 'Cost Analysis' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+      },
+    },
+  },
+  {
+    name: 'get_cost_revision',
+    description: 'Get a specific cost revision by ID with all revision items',
+    annotations: { category: 'Analytics', subcategory: 'Cost Analysis' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Cost revision ID (GUID)' },
+      },
+      required: ['id'],
+    },
+  },
+
+  // ===== DEPOSITS =====
+  {
+    name: 'list_deposits',
+    description: 'Get deposit/retainer tracking with usage calculations and threshold alerts',
+    annotations: { category: 'Financial', subcategory: 'Deposits' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+      },
+    },
+  },
+  {
+    name: 'get_deposit_by_project',
+    description: 'Get deposit details for a specific project',
+    annotations: { category: 'Financial', subcategory: 'Deposits' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'Project ID (GUID)' },
+      },
+      required: ['projectId'],
+    },
+  },
+
+  // ===== PROPOSAL TEMPLATE PRICING =====
+  {
+    name: 'get_proposal_template_pricing',
+    description: 'Get standard pricing templates for estimates across all categories',
+    annotations: { category: 'Proposals', subcategory: 'Templates' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+      },
+    },
+  },
+  {
+    name: 'get_proposal_template_pricing_by_id',
+    description: 'Get pricing template for a specific proposal template ID',
+    annotations: { category: 'Proposals', subcategory: 'Templates' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Proposal template ID (GUID)' },
+      },
+      required: ['id'],
+    },
+  },
 ];
 
 // Default export: function that creates the MCP server
@@ -838,6 +1081,179 @@ export default function createServer({ config }: { config: z.infer<typeof config
             limit: String(limit),
           });
           result = await callJoeAPI(baseUrl, `/api/v1/projectmanagements?${queryParams}`);
+          break;
+        }
+
+        // ===== TIER 2: FINANCIAL & ANALYTICS =====
+
+        // ===== TRANSACTIONS =====
+        case 'list_transactions': {
+          const { page = 1, limit = 20, projectId = '', accountId = '', startDate = '', endDate = '', transactionType = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(projectId && { projectId }),
+            ...(accountId && { accountId }),
+            ...(startDate && { startDate }),
+            ...(endDate && { endDate }),
+            ...(transactionType && { transactionType }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/transactions?${queryParams}`);
+          break;
+        }
+
+        case 'get_transaction_summary': {
+          const { groupBy, projectId = '', startDate = '', endDate = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            groupBy,
+            ...(projectId && { projectId }),
+            ...(startDate && { startDate }),
+            ...(endDate && { endDate }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/transactions/summary?${queryParams}`);
+          break;
+        }
+
+        // ===== JOB BALANCES =====
+        case 'list_job_balances': {
+          const { page = 1, limit = 20, projectId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(projectId && { projectId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/job-balances?${queryParams}`);
+          break;
+        }
+
+        // ===== COST VARIANCE =====
+        case 'get_cost_variance': {
+          const { projectId = '', categoryId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            ...(projectId && { projectId }),
+            ...(categoryId && { categoryId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/cost-variance?${queryParams}`);
+          break;
+        }
+
+        // ===== INVOICES =====
+        case 'list_invoices': {
+          const { page = 1, limit = 20, clientId = '', status = '', startDate = '', endDate = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(clientId && { clientId }),
+            ...(status && { status }),
+            ...(startDate && { startDate }),
+            ...(endDate && { endDate }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/invoices?${queryParams}`);
+          break;
+        }
+
+        case 'get_invoice': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/invoices/${id}`);
+          break;
+        }
+
+        // ===== SCHEDULE REVISIONS =====
+        case 'list_schedule_revisions': {
+          const { page = 1, limit = 20, projectId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(projectId && { projectId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/schedule-revisions?${queryParams}`);
+          break;
+        }
+
+        case 'get_schedule_revision': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/schedule-revisions/${id}`);
+          break;
+        }
+
+        // ===== PROJECT DETAILS =====
+        case 'get_project_details': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/projects/${id}/details`);
+          break;
+        }
+
+        // ===== PROPOSAL PIPELINE =====
+        case 'get_proposal_pipeline': {
+          const { startDate = '', endDate = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            ...(startDate && { startDate }),
+            ...(endDate && { endDate }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/proposals/pipeline?${queryParams}`);
+          break;
+        }
+
+        // ===== ESTIMATE REVISIONS =====
+        case 'get_estimate_revision_history': {
+          const { projectId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            ...(projectId && { projectId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/estimates/revision-history?${queryParams}`);
+          break;
+        }
+
+        // ===== COST REVISIONS =====
+        case 'list_cost_revisions': {
+          const { page = 1, limit = 20, projectId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(projectId && { projectId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/cost-revisions?${queryParams}`);
+          break;
+        }
+
+        case 'get_cost_revision': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/cost-revisions/${id}`);
+          break;
+        }
+
+        // ===== DEPOSITS =====
+        case 'list_deposits': {
+          const { page = 1, limit = 20, projectId = '' } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+            ...(projectId && { projectId }),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/deposits?${queryParams}`);
+          break;
+        }
+
+        case 'get_deposit_by_project': {
+          const { projectId } = args as { projectId: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/deposits/${projectId}`);
+          break;
+        }
+
+        // ===== PROPOSAL TEMPLATE PRICING =====
+        case 'get_proposal_template_pricing': {
+          const { page = 1, limit = 20 } = args as any;
+          const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+          });
+          result = await callJoeAPI(baseUrl, `/api/v1/proposal-templates/pricing?${queryParams}`);
+          break;
+        }
+
+        case 'get_proposal_template_pricing_by_id': {
+          const { id } = args as { id: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/proposal-templates/${id}/pricing`);
           break;
         }
 

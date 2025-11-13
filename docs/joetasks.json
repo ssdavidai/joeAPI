@@ -1,0 +1,1308 @@
+{
+  "tasks": [
+    {
+      "taskName": "Update Schedule",
+      "description": "Extend or adjust project schedule by a specified number of days due to delays (e.g., painting, plumbing, weather, material delivery, etc.)",
+      "category": "Scheduling & Job Site Management",
+      "promptTemplate": "Update the schedule for [PROJECT_NAME] by [NUMBER_OF_DAYS] days due to [REASON/TRADE] delay",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_project_schedules",
+          "context": "First, retrieve all project schedules to identify which project schedule needs to be updated based on the user's prompt (project name or identifier). This gives us the schedule IDs available in the system.",
+          "validation": "Check that the response contains a list of project schedules with their IDs. Look for the specific project mentioned in the user's request.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_project_schedule_tasks",
+          "context": "Now that we have the schedule ID, get all the tasks within that schedule. Look for tasks related to the specific trade or reason mentioned in the prompt (e.g., painting, plumbing, electrical, etc.) that need to be delayed.",
+          "validation": "Verify the response contains construction tasks with their current dates. Identify the specific tasks related to the trade/reason mentioned in the user's request.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "create_action_item (Schedule Change)",
+          "context": "Create a schedule change action item to document the schedule adjustment. Use ActionTypeId=2 (Schedule Change) with ScheduleChange object specifying NoOfDays=[from prompt] and the ConstructionTaskId from step 2. Include the reason for delay in the description.",
+          "validation": "Confirm the action item was created successfully with ActionTypeId=2, and the ScheduleChange object shows the correct number of days specified in the prompt. Check that the action item includes the correct task ID and reason.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "UPDATE_PROJECT_SCHEDULE_TASK (missing)",
+          "context": "Actually update the project schedule task dates to reflect the specified extension. This would adjust the start/end dates of the affected task(s) and all dependent tasks by the number of days specified in the prompt.",
+          "validation": "The affected task(s) and dependent tasks should have their dates pushed forward by the specified number of days. Verify the schedule reflects the changes accurately.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Weather-Based Schedule Adjustment",
+      "description": "Adjust job schedule based on weather forecast (rain, extreme heat, cold, wind, etc.) that would impact outdoor work",
+      "category": "Scheduling & Job Site Management",
+      "promptTemplate": "Adjust the schedule for [PROJECT_NAME] due to [WEATHER_CONDITION] forecast affecting [TASK_TYPES] work",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "WEATHER_API_INTEGRATION (missing)",
+          "context": "Check weather forecast for the job site location to determine if adverse weather conditions (rain, extreme temperatures, high winds, etc.) are expected during scheduled outdoor work periods. Parse the user's prompt to identify which weather condition to check for.",
+          "validation": "Weather data should show the specified weather condition probability and timing for the next 7-14 days relevant to the outdoor work scheduled.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "list_project_schedules",
+          "context": "Retrieve project schedules to identify which projects (specified in prompt or all affected projects) have outdoor work scheduled during the adverse weather forecast period.",
+          "validation": "List of project schedules with their IDs is returned successfully, filtered to the project(s) mentioned in the user's request.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "list_project_schedule_tasks",
+          "context": "For each affected project, get the construction tasks to identify outdoor weather-sensitive tasks (concrete, roofing, painting, exterior work, etc.) that fall within the adverse weather forecast window. Focus on the task types mentioned in the prompt.",
+          "validation": "Construction tasks are returned with their dates. Weather-sensitive outdoor tasks during the adverse weather period should be identified.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "create_action_item (Schedule Change)",
+          "context": "Create a schedule change action item for weather delay. Use ActionTypeId=2 with ScheduleChange specifying the number of days to delay based on weather forecast duration. Include specific weather condition and affected tasks in the description.",
+          "validation": "Action item created with weather delay reason (specific weather condition from prompt) and appropriate number of days specified in ScheduleChange.",
+          "missing": false
+        },
+        {
+          "id": 5,
+          "tool": "UPDATE_PROJECT_SCHEDULE_TASK (missing)",
+          "context": "Reschedule the outdoor weather-sensitive tasks to after the adverse weather period, updating start/end dates accordingly. Ensure dependent tasks are also adjusted.",
+          "validation": "Weather-sensitive outdoor tasks are moved to dates after the adverse weather forecast ends, and schedule shows updated dates.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Generate Automated Weekly Report",
+      "description": "Automate recurring weekly reports (meeting reports, status updates, summaries) for team members",
+      "category": "Scheduling & Job Site Management",
+      "promptTemplate": "Generate automated weekly [REPORT_TYPE] report for [RECIPIENT/MEETING] on [DAY_OF_WEEK]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_project_managements",
+          "context": "Gather all project management data which contains information typically needed for weekly reports (project statuses, completion percentages, timelines, etc.). This provides the base data for the report.",
+          "validation": "Project management data is returned successfully with project statuses and details relevant to the requested report type.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_action_items",
+          "context": "Retrieve all action items from the specified time period (default: past week) to include in the status report. This shows what work was discussed, completed, or is pending.",
+          "validation": "Action items from the reporting period are returned, including their status, type, and resolution for inclusion in the report.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "list_proposals",
+          "context": "Get recent proposals to include new business activity in the weekly report. This provides visibility into the sales/pipeline activity.",
+          "validation": "Proposals list is returned with their current status and client information for the reporting period.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "GENERATE_REPORT_TEMPLATE (missing)",
+          "context": "Format all the gathered data into the specified report template (from prompt). This would structure the data into predefined sections appropriate for the report type (e.g., meeting reports might have: projects status, action items, new proposals, issues/risks, etc.).",
+          "validation": "Report is formatted according to the requested template with all required sections populated with relevant data.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "EXPORT_TO_SPREADSHEET (missing)",
+          "context": "Export the formatted report to a spreadsheet format (Excel/Google Sheets) suitable for the recipient and meeting type specified in the prompt.",
+          "validation": "Spreadsheet file is created with proper formatting and all data accurately transferred in a readable format.",
+          "missing": true
+        },
+        {
+          "id": 6,
+          "tool": "EMAIL_DELIVERY (missing)",
+          "context": "Automatically email the generated spreadsheet to the recipient(s) specified in the prompt (e.g., team member, meeting participants) on the scheduled day (e.g., every Monday morning).",
+          "validation": "Email is sent successfully to correct recipients with the spreadsheet attached on the specified schedule.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Generate Job Status Reports",
+      "description": "Sort conversations by job and create weekly status reports using a pre-defined template",
+      "category": "Scheduling & Job Site Management",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "CONVERSATION_TRACKING_SYSTEM (missing)",
+          "context": "Access the conversation tracking system to retrieve all conversations/communications from the past week, organized by project/job.",
+          "validation": "Conversations are successfully retrieved and can be filtered by project ID.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "list_action_items",
+          "context": "Get all action items for each project to supplement the conversation data with actual work items and their status.",
+          "validation": "Action items are returned grouped by project, showing what work was discussed and completed.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "list_action_item_comments",
+          "context": "For key action items, retrieve the comment threads to understand the conversation flow and decisions made.",
+          "validation": "Comments provide context and timeline of discussions for each action item.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "TEMPLATE_ENGINE (missing)",
+          "context": "Apply the pre-defined job status report template to format the conversations and action items into a structured report for each job.",
+          "validation": "Each job has a formatted status report following the template structure with all relevant information included.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "REPORT_DISTRIBUTION (missing)",
+          "context": "Distribute the weekly status reports to relevant stakeholders (project managers, clients, team leads) based on their job assignments.",
+          "validation": "Reports are sent to correct recipients for their respective jobs.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Projected Income",
+      "description": "Estimate expected monthly income",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_proposals",
+          "context": "Retrieve all active proposals to calculate potential income from proposals that are likely to be accepted this month.",
+          "validation": "Proposals are returned with their total amounts and current status (pending, accepted, etc.).",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_proposal_lines",
+          "context": "For each proposal, get the detailed line items to understand the breakdown of income sources and payment schedules.",
+          "validation": "Proposal line items show detailed pricing and can be used to calculate payment milestones.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "list_project_managements",
+          "context": "Get all active projects to determine ongoing income from projects in progress, including percentage complete and remaining payments.",
+          "validation": "Project data includes completion percentages and payment schedules.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "FINANCIAL_PROJECTIONS_ENGINE (missing)",
+          "context": "Calculate projected monthly income based on: (1) Expected proposal acceptances with historical acceptance rate, (2) Scheduled milestone payments from active projects, (3) Completion-based payments calculated from project progress.",
+          "validation": "Income projection shows breakdown by source (new proposals, active projects) with confidence levels and expected payment dates.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "GENERATE_INCOME_FORECAST_REPORT (missing)",
+          "context": "Create a formatted report showing projected income for the month with breakdown by project, proposal, and payment type.",
+          "validation": "Report clearly shows total projected income, income by source, and payment timing throughout the month.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Job Queue Summary",
+      "description": "Report on number of homes in queue, under construction, and upcoming pipeline",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_proposals",
+          "context": "Get all proposals to identify homes/jobs in the queue (proposals pending acceptance).",
+          "validation": "Proposals list shows status field that can distinguish between pipeline (pending) and accepted.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_project_managements",
+          "context": "Retrieve all active projects to count homes currently under construction.",
+          "validation": "Project list shows active construction projects with their current status.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "list_project_schedules",
+          "context": "Get project schedules to determine which projects are actively being worked on versus scheduled to start soon.",
+          "validation": "Schedules show current vs. upcoming projects based on start dates.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "PIPELINE_ANALYTICS (missing)",
+          "context": "Analyze all the data to categorize homes into: (1) Queue - proposals pending client acceptance, (2) Under Construction - active projects with scheduled tasks in progress, (3) Upcoming Pipeline - accepted proposals not yet started or projects scheduled to begin soon.",
+          "validation": "Clear categorization showing counts in each stage: X homes in queue, Y under construction, Z in upcoming pipeline.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "GENERATE_QUEUE_SUMMARY_REPORT (missing)",
+          "context": "Create a summary report visualizing the pipeline with counts, total values, and expected timeline for each category.",
+          "validation": "Report shows clear metrics: number of homes in each stage, total contract values, expected start/completion dates.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Gross Receipts Forecast",
+      "description": "Project gross receipts for the coming month",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_project_managements",
+          "context": "Get all active projects to calculate expected payments based on project completion and payment schedules.",
+          "validation": "Projects returned with completion status and payment milestone information.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_proposals",
+          "context": "Retrieve recently accepted proposals that will generate initial deposits or payments in the coming month.",
+          "validation": "Newly accepted proposals that haven't started yet, representing new deposit income.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "PAYMENT_SCHEDULE_SYSTEM (missing)",
+          "context": "Access detailed payment schedules to identify all invoices and payments due in the next month from all active projects.",
+          "validation": "List of upcoming payments with dates, amounts, and client information.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "ACCOUNTS_RECEIVABLE_SYSTEM (missing)",
+          "context": "Check accounts receivable to include expected payments from outstanding invoices that are due within the month.",
+          "validation": "Outstanding receivables with expected payment dates within the forecast period.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "GROSS_RECEIPTS_CALCULATOR (missing)",
+          "context": "Calculate total gross receipts forecast by summing: (1) Scheduled milestone payments, (2) New proposal deposits, (3) Expected receivables collections, (4) Historical collection rate adjustments.",
+          "validation": "Total gross receipts projection with breakdown by source and confidence intervals based on historical collection rates.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Work-in-Process Report",
+      "description": "Provide current work-in-process status",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_project_managements",
+          "context": "Retrieve all active projects to determine which jobs are currently in process.",
+          "validation": "Active projects list showing current status of each job.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_project_schedule_tasks",
+          "context": "For each active project, get the construction tasks to see which tasks are completed, in progress, and upcoming.",
+          "validation": "Task lists show completion status and provide insight into work progress.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "list_action_items",
+          "context": "Get all action items for active projects, particularly cost changes and schedule changes that indicate work adjustments.",
+          "validation": "Action items show recent changes, issues, and adjustments to the work in process.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "COST_TRACKING_SYSTEM (missing)",
+          "context": "Access cost tracking to determine how much has been spent on each work-in-process job versus the budget.",
+          "validation": "Cost data shows actual costs incurred to date vs. budgeted amounts for each WIP project.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "WIP_REPORT_GENERATOR (missing)",
+          "context": "Generate comprehensive WIP report showing: (1) All active projects, (2) Completion percentage, (3) Costs incurred vs. budget, (4) Estimated completion date, (5) Outstanding issues/action items.",
+          "validation": "WIP report provides complete status of all ongoing work with financial and timeline metrics.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Receivables Report",
+      "description": "Give balances on supervision collected and supervision receivables",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "ACCOUNTS_RECEIVABLE_SYSTEM (missing)",
+          "context": "Access the accounts receivable system to get all outstanding invoices, particularly those related to supervision fees.",
+          "validation": "AR data shows unpaid invoices with amounts, dates, and aging information.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "PAYMENT_COLLECTION_SYSTEM (missing)",
+          "context": "Retrieve all collected supervision fee payments to calculate total supervision collected to date.",
+          "validation": "Payment records show all supervision fees that have been successfully collected.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "list_clients",
+          "context": "Get client information to associate receivables with specific clients and their supervision fee arrangements.",
+          "validation": "Client data helps identify who owes supervision fees and their payment history.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "RECEIVABLES_CALCULATOR (missing)",
+          "context": "Calculate: (1) Total supervision fees collected (paid), (2) Total outstanding supervision receivables (unpaid), (3) Aging analysis showing how long receivables have been outstanding.",
+          "validation": "Clear breakdown of collected vs. outstanding supervision fees with aging details.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "RECEIVABLES_REPORT_GENERATOR (missing)",
+          "context": "Generate formatted receivables report showing supervision collected balance, supervision receivables balance, and breakdown by client with aging.",
+          "validation": "Report clearly shows total collected, total receivable, and detail by client with days outstanding.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Cost-to-Estimate Report",
+      "description": "Provide real-time cost vs. estimate tracking report",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_estimates",
+          "context": "Retrieve all estimates to get the original budgeted costs for each project.",
+          "validation": "Estimates show original budget breakdown by category/trade.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_action_items",
+          "context": "Get all action items, particularly cost change action items (ActionTypeId=1) that show budget adjustments.",
+          "validation": "Cost change action items show all budget modifications made after the original estimate.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "get_action_item_cost_change",
+          "context": "For each cost change action item, retrieve the detailed cost change data including amount and estimate category affected.",
+          "validation": "Cost change details show how much each category's budget was adjusted and why.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "ACTUAL_COST_TRACKING_SYSTEM (missing)",
+          "context": "Access the actual cost tracking system to get real costs incurred to date for each project, broken down by estimate category/trade.",
+          "validation": "Actual costs show what has actually been spent on each category of work (labor, materials, subcontractors, etc.).",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "COST_VARIANCE_CALCULATOR (missing)",
+          "context": "Calculate variance analysis: (1) Original estimate by category, (2) Revised estimate (original + approved cost changes), (3) Actual costs to date, (4) Variance (actual vs. revised estimate), (5) Percentage over/under budget.",
+          "validation": "Variance report shows for each category: estimated, actual, variance in dollars and percentage.",
+          "missing": true
+        },
+        {
+          "id": 6,
+          "tool": "REALTIME_COST_DASHBOARD (missing)",
+          "context": "Generate real-time dashboard showing cost vs. estimate status for all active projects, highlighting categories that are over/under budget.",
+          "validation": "Dashboard provides immediate visibility into cost performance across all projects with red/yellow/green indicators for budget status.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Revised Estimate Analysis",
+      "description": "Show history of revised estimates per job and calculate average overage",
+      "category": "Reporting & Forecasting",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_estimates",
+          "context": "Get all estimates to identify the original budget for each job.",
+          "validation": "Estimates list shows original budget amounts by job/project.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_action_items",
+          "context": "Retrieve all cost change action items (ActionTypeId=1) to track all budget revisions made to each job.",
+          "validation": "Cost change action items show all budget modifications across all jobs.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "get_action_item_cost_change",
+          "context": "For each cost change action item, get the detailed cost change data to build a history of revisions per job.",
+          "validation": "Cost change details show amounts, categories, and dates of each revision.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "REVISION_HISTORY_ANALYZER (missing)",
+          "context": "Analyze the cost change history to: (1) Group revisions by job, (2) Calculate total revised amount per job, (3) Calculate overage (revised estimate - original estimate), (4) Calculate average overage across all jobs.",
+          "validation": "Analysis shows per-job revision history, total overage per job, and company-wide average overage percentage.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "TREND_ANALYSIS_REPORT (missing)",
+          "context": "Generate trend report showing revision patterns: which estimate categories most frequently require revisions, average time to revision, correlation with job type/size.",
+          "validation": "Report identifies patterns in estimate revisions to help improve future estimating accuracy.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Notify Subcontractors",
+      "description": "Send notifications to subcontractors about worksite issues, delays, schedule changes, or meeting requests",
+      "category": "Communication Tasks",
+      "promptTemplate": "Notify [SUBCONTRACTOR_NAME] about [ISSUE/DELAY/MEETING] for [PROJECT_NAME]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_subcontractors",
+          "context": "Retrieve subcontractor information to get contact details (phone numbers, emails) for the subcontractor(s) specified in the prompt. Use search functionality if available to find specific subcontractors by name or trade.",
+          "validation": "Subcontractor list includes contact information (phone numbers, emails) for the subcontractor(s) mentioned in the user's request.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_action_items",
+          "context": "Get action items related to the issue, delay, or topic that requires subcontractor notification. This provides context for the communication.",
+          "validation": "Action items show the specific issues/delays/changes that need to be communicated to the subcontractor.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "SMS_NOTIFICATION_SERVICE (missing)",
+          "context": "Send SMS text messages to the specified subcontractor(s) to notify them of worksite issues, delays, schedule changes, or to schedule meetings. Include relevant details from the prompt and action items.",
+          "validation": "SMS successfully sent to correct subcontractor phone number(s) with the specified issue/meeting/delay details.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "create_action_item (Follow-up)",
+          "context": "Create a follow-up action item (ActionTypeId=6) to track the subcontractor notification and any required response or meeting. Include the subcontractor name and topic in the action item.",
+          "validation": "Follow-up action item created referencing the subcontractor and the issue/topic communicated, with appropriate due date.",
+          "missing": false
+        },
+        {
+          "id": 5,
+          "tool": "COMMUNICATION_LOG (missing)",
+          "context": "Log the communication in a central system for tracking all subcontractor interactions, messages sent, and their responses for future reference.",
+          "validation": "Communication logged with timestamp, recipient subcontractor, message content, and any response received.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Client Communications",
+      "description": "Send estimates, updates, proposals, or other communications to clients via email or text",
+      "category": "Communication Tasks",
+      "promptTemplate": "Send [COMMUNICATION_TYPE] to [CLIENT_NAME] regarding [PROJECT/TOPIC]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_clients",
+          "context": "Search for the specific client(s) mentioned in the prompt to get their contact information (email address, phone number). Use search functionality to find clients by name.",
+          "validation": "Client records returned with email addresses and phone numbers for the client(s) specified in the request.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_proposals",
+          "context": "Get the proposals/estimates associated with the client and topic mentioned in the prompt. Filter by client to find relevant proposals or estimates that need to be sent.",
+          "validation": "Proposals retrieved showing estimate details and amounts for the specified client and project/topic.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "ESTIMATE_PDF_GENERATOR (missing)",
+          "context": "Generate professional PDF versions of the estimates, proposals, or documents that need to be sent to the client based on the communication type specified in the prompt.",
+          "validation": "PDF files created with proper formatting showing all relevant details (estimate, proposal, update, etc.).",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "EMAIL_SENDING_SERVICE (missing)",
+          "context": "Send email to the client with the document (PDF, estimate, etc.) attached, including professional message text relevant to the communication type (estimate delivery, project update, etc.).",
+          "validation": "Email sent successfully to correct client email address with appropriate attachments and message content.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "SMS_NOTIFICATION_SERVICE (missing)",
+          "context": "Optionally send SMS notification to client to alert them that an email has been sent or to provide brief updates, depending on the communication type and client preference.",
+          "validation": "SMS sent to client with appropriate notification or brief update message.",
+          "missing": true
+        },
+        {
+          "id": 6,
+          "tool": "create_action_item (Client Contact)",
+          "context": "Create client contact action item (ActionTypeId=3) to track the communication sent and schedule any required follow-up based on the communication type.",
+          "validation": "Action item created documenting the communication (type, content, recipient) and setting appropriate follow-up date if needed.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Personal Messages",
+      "description": "Call or text spouse or staff members (e.g., send flowers, disciplinary messages, etc.)",
+      "category": "Communication Tasks",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "PERSONAL_CONTACTS_SYSTEM (missing)",
+          "context": "Access personal contacts database to get phone numbers for spouse, staff members, and other personal contacts.",
+          "validation": "Personal contact information retrieved successfully.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "SMS_SERVICE (missing)",
+          "context": "Send text messages to personal contacts for various purposes (reminders, personal notes, etc.).",
+          "validation": "SMS sent successfully to correct recipient.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "PHONE_CALLING_SERVICE (missing)",
+          "context": "Initiate phone calls to personal contacts when voice communication is needed.",
+          "validation": "Phone call initiated to correct number.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "FLOWER_DELIVERY_API (missing)",
+          "context": "Integrate with flower delivery service API to order and send flowers to spouse or others.",
+          "validation": "Flower order placed successfully with delivery details confirmed.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "create_action_item (Reminder)",
+          "context": "Create reminder action items (ActionTypeId=7) for important personal tasks or follow-ups.",
+          "validation": "Reminder action item created with appropriate due date and description.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Instagram Workflow",
+      "description": "Send job site photos to Becca and ensure they are posted on Instagram by week's end",
+      "category": "Site Feedback & Media",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "PHOTO_STORAGE_SYSTEM (missing)",
+          "context": "Access job site photo storage to retrieve recent photos that should be shared on social media.",
+          "validation": "Job site photos retrieved with metadata (date, project, location).",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "EMAIL_SERVICE (missing)",
+          "context": "Email selected job site photos to Becca with instructions for Instagram posting.",
+          "validation": "Email sent to Becca with photo attachments and posting instructions.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "create_action_item (Follow-up)",
+          "context": "Create a follow-up action item (ActionTypeId=6) with due date end of week to ensure photos are posted to Instagram.",
+          "validation": "Follow-up action item created with end-of-week due date for Instagram posting verification.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "INSTAGRAM_API_INTEGRATION (missing)",
+          "context": "Optionally integrate directly with Instagram API to schedule posts or verify posting was completed.",
+          "validation": "Instagram posting verified or scheduled successfully.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "create_action_item_comment",
+          "context": "Add comment to the follow-up action item once Instagram posting is confirmed.",
+          "validation": "Comment added confirming Instagram post completion with post URL/details.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Landscape Estimates",
+      "description": "Create estimates using pricing formulas (e.g., sod, irrigation, trees) and send to clients",
+      "category": "Estimates & Financials",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "LANDSCAPE_PRICING_CALCULATOR (missing)",
+          "context": "Use pricing formulas to calculate costs for landscape items: sod ($/sq ft), irrigation ($/sq ft or per zone), trees (per unit), etc.",
+          "validation": "Pricing calculated based on square footage, quantities, and standard rates.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "ESTIMATE_BUILDER (missing)",
+          "context": "Build comprehensive estimate using the calculated landscape pricing, including labor, materials, and markup.",
+          "validation": "Complete landscape estimate created with itemized pricing for all components.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "list_clients",
+          "context": "Retrieve client information for the landscape estimate recipient.",
+          "validation": "Client contact information retrieved for estimate delivery.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "ESTIMATE_PDF_GENERATOR (missing)",
+          "context": "Generate professional PDF of the landscape estimate.",
+          "validation": "PDF estimate created with professional formatting.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "EMAIL_SERVICE (missing)",
+          "context": "Email the landscape estimate PDF to the client.",
+          "validation": "Email sent successfully to client with estimate attached.",
+          "missing": true
+        },
+        {
+          "id": 6,
+          "tool": "create_action_item (Client Contact)",
+          "context": "Create client contact action item (ActionTypeId=3) to track estimate delivery and follow-up.",
+          "validation": "Action item created for tracking estimate follow-up with client.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Hardscape Estimates",
+      "description": "Prepare and email estimates for driveways and similar work",
+      "category": "Estimates & Financials",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "HARDSCAPE_PRICING_CALCULATOR (missing)",
+          "context": "Calculate costs for hardscape work: concrete/pavers ($/sq ft), excavation, base prep, drainage, finishing, etc.",
+          "validation": "Hardscape pricing calculated with all components (materials, labor, equipment).",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "ESTIMATE_BUILDER (missing)",
+          "context": "Create detailed hardscape estimate including site preparation, materials, labor, and timeline.",
+          "validation": "Complete estimate with itemized pricing and project timeline.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "list_clients",
+          "context": "Get client contact information for estimate delivery.",
+          "validation": "Client email address retrieved.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "ESTIMATE_PDF_GENERATOR (missing)",
+          "context": "Generate PDF of hardscape estimate with diagrams/plans if available.",
+          "validation": "Professional PDF estimate created.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "EMAIL_SERVICE (missing)",
+          "context": "Email hardscape estimate to client with detailed explanation.",
+          "validation": "Email sent with estimate PDF attached.",
+          "missing": true
+        },
+        {
+          "id": 6,
+          "tool": "create_action_item (Client Contact)",
+          "context": "Create action item to track estimate follow-up.",
+          "validation": "Follow-up action item created with due date.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Detailed Budget Tracking",
+      "description": "Report how far a job is over budget, including amount and percentage",
+      "category": "Estimates & Financials",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_estimates",
+          "context": "Get the original estimate/budget for the specific job.",
+          "validation": "Original budget retrieved with breakdown by category.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "list_action_items",
+          "context": "Retrieve all cost change action items for the job to get revised budget.",
+          "validation": "All budget adjustments retrieved.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "get_action_item_cost_change",
+          "context": "Get detailed cost change data to calculate total revised budget.",
+          "validation": "Cost changes show amounts and categories for accurate revised budget calculation.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "ACTUAL_COST_SYSTEM (missing)",
+          "context": "Retrieve actual costs spent on the job to date.",
+          "validation": "Actual costs show all expenditures by category.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "BUDGET_VARIANCE_CALCULATOR (missing)",
+          "context": "Calculate budget variance: (1) Revised budget = Original + Changes, (2) Variance = Actual - Revised, (3) Percentage = (Variance / Revised) * 100.",
+          "validation": "Report shows job is $X over budget (Y% over revised budget).",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Deposit Tracking",
+      "description": "Track owner deposits and current balance on specific job accounts",
+      "category": "Estimates & Financials",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "DEPOSIT_TRACKING_SYSTEM (missing)",
+          "context": "Access deposit tracking system to get initial owner deposits for each job/project.",
+          "validation": "Deposit records show initial deposit amounts and dates.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "PAYMENT_HISTORY_SYSTEM (missing)",
+          "context": "Retrieve payment history showing all draws/payments made against the deposit.",
+          "validation": "Payment history shows all amounts withdrawn from deposit account.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "list_project_managements",
+          "context": "Get project information to associate deposits with specific jobs.",
+          "validation": "Project data links to deposit accounts.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "DEPOSIT_BALANCE_CALCULATOR (missing)",
+          "context": "Calculate current deposit balance: Initial Deposit - Total Payments Used = Current Balance.",
+          "validation": "Current balance calculated showing remaining deposit funds.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "DEPOSIT_REPORT_GENERATOR (missing)",
+          "context": "Generate report showing: initial deposit, payments to date, current balance, and percentage of deposit used.",
+          "validation": "Report clearly shows deposit status for each job account.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Owner Invoice Alerts",
+      "description": "Trigger invoice request when 80% of retainer has been used",
+      "category": "Estimates & Financials",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "RETAINER_TRACKING_SYSTEM (missing)",
+          "context": "Monitor retainer balances for all active projects to calculate percentage used.",
+          "validation": "Retainer data shows initial amount, used amount, and percentage consumed.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "list_project_managements",
+          "context": "Get project details to associate retainer usage with specific jobs/clients.",
+          "validation": "Project data linked to retainer accounts.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "THRESHOLD_MONITORING_SERVICE (missing)",
+          "context": "Automated monitoring service that triggers alerts when retainer usage exceeds 80% threshold.",
+          "validation": "Alert triggered when threshold is reached.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "create_action_item (Reminder)",
+          "context": "Create reminder action item (ActionTypeId=7) to request additional retainer/invoice from owner.",
+          "validation": "Reminder action item created with details of retainer status and amount needed.",
+          "missing": false
+        },
+        {
+          "id": 5,
+          "tool": "EMAIL_NOTIFICATION_SERVICE (missing)",
+          "context": "Send email notification to accounting/admin staff about retainer threshold being reached.",
+          "validation": "Email sent with retainer status and invoice request instructions.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Job Benchmarking",
+      "description": "Average cost and duration of specific job types (e.g., flooring, framing, insulation) from historical jobs",
+      "category": "Job Analytics & Cost Modeling",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_project_managements",
+          "context": "Retrieve all completed projects to build historical database for benchmarking.",
+          "validation": "Historical project data includes completion dates and project types.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "COST_HISTORY_SYSTEM (missing)",
+          "context": "Access historical cost data for completed projects broken down by trade/task type (flooring, framing, insulation, etc.).",
+          "validation": "Cost history shows actual costs by task type across multiple projects.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "DURATION_TRACKING_SYSTEM (missing)",
+          "context": "Retrieve historical duration data showing how long each task type took on past projects.",
+          "validation": "Duration data shows task completion times from historical projects.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "STATISTICAL_ANALYSIS_ENGINE (missing)",
+          "context": "Calculate benchmarks: (1) Average cost by task type, (2) Average duration by task type, (3) Cost/duration by project size, (4) Standard deviation and ranges.",
+          "validation": "Statistical analysis provides reliable averages and ranges for each job type.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "BENCHMARK_REPORT_GENERATOR (missing)",
+          "context": "Generate benchmark report showing average costs and durations for each task type, useful for estimating future projects.",
+          "validation": "Report shows clear benchmarks: Task X averages $Y and Z days based on N historical projects.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Cost per Square Foot Reports",
+      "description": "Break down costs by trade (e.g., drywall, lumber, paint, etc.) based on square footage",
+      "category": "Job Analytics & Cost Modeling",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "PROJECT_DETAILS_SYSTEM (missing)",
+          "context": "Retrieve project details including total square footage for each completed project.",
+          "validation": "Project square footage data available for cost/sqft calculations.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "COST_BREAKDOWN_SYSTEM (missing)",
+          "context": "Get detailed cost breakdown by trade (drywall, lumber, paint, etc.) for each project.",
+          "validation": "Costs itemized by trade/material category for each project.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "COST_PER_SQFT_CALCULATOR (missing)",
+          "context": "Calculate cost per square foot for each trade: Trade Cost / Total Square Feet = $/sqft by trade.",
+          "validation": "Cost per sqft calculated for each trade across projects.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "COMPARATIVE_ANALYSIS_ENGINE (missing)",
+          "context": "Compare cost/sqft across multiple projects to identify trends, outliers, and averages by trade.",
+          "validation": "Analysis shows which projects had high/low costs per sqft and why.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "COST_SQFT_REPORT_GENERATOR (missing)",
+          "context": "Generate report showing cost breakdown per square foot by trade, with project comparisons and averages.",
+          "validation": "Report clearly shows $/sqft for each trade with project-by-project and average data.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Change Order Tracking",
+      "description": "Create and label 'revised estimates' instead of 'change orders' for cost-plus jobs",
+      "category": "Job Analytics & Cost Modeling",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_action_items",
+          "context": "Retrieve all cost change action items which represent changes to the original estimate.",
+          "validation": "Cost change action items retrieved for tracking estimate revisions.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "get_action_item_cost_change",
+          "context": "Get detailed cost change data including amounts, categories, and reasons for each revision.",
+          "validation": "Detailed cost change data shows what was revised and why.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "create_action_item (General Change Order)",
+          "context": "Create general change order action items (ActionTypeId=8) but label them as 'Revised Estimates' in the title/description for cost-plus jobs.",
+          "validation": "Action items created with 'Revised Estimate' terminology appropriate for cost-plus contracts.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "REVISION_TRACKING_SYSTEM (missing)",
+          "context": "Track all estimate revisions in a systematic way showing revision number, date, amount, and cumulative impact on budget.",
+          "validation": "Revision history clearly tracked with version numbers and cumulative totals.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "REVISED_ESTIMATE_REPORT_GENERATOR (missing)",
+          "context": "Generate 'Revised Estimate' reports (avoiding 'change order' language) showing current budget including all approved revisions.",
+          "validation": "Report uses 'Revised Estimate' terminology and shows clear progression from original to current estimate.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Upgrade Pricing",
+      "description": "Price out client upgrade requests (fixtures, materials, features, quantities) and revise estimate accordingly",
+      "category": "Job Analytics & Cost Modeling",
+      "promptTemplate": "Price upgrade for [ITEM/FEATURE] from [STANDARD_OPTION] to [UPGRADE_OPTION] for [CLIENT_NAME/PROJECT]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "PRODUCT_PRICING_DATABASE (missing)",
+          "context": "Access pricing database to get current costs for the upgrade items specified in the prompt (e.g., premium fixtures, upgraded materials, additional features) including material and labor costs.",
+          "validation": "Pricing data retrieved for the specific upgrade products/features mentioned in the user's request.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "UPGRADE_CALCULATOR (missing)",
+          "context": "Calculate upgrade cost differential: (Upgrade Item Cost - Standard Item Cost) + Additional Labor + Installation Differences = Net Upgrade Cost. Use the standard and upgrade options specified in the prompt.",
+          "validation": "Upgrade pricing calculated showing incremental cost vs. standard option for the items specified in the request.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "create_action_item (Cost Change)",
+          "context": "Create cost change action item (ActionTypeId=1) documenting the upgrade request, the items being upgraded (from prompt), and the cost impact on the estimate.",
+          "validation": "Cost change action item created with upgrade details (item names, quantities) and pricing from the calculation.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "create_action_item_cost_change",
+          "context": "Add cost change data to the action item specifying the upgrade amount calculated and the affected estimate category (fixtures, materials, labor, etc.).",
+          "validation": "Cost change data added showing upgrade amount and the specific estimate category being affected.",
+          "missing": false
+        },
+        {
+          "id": 5,
+          "tool": "REVISED_ESTIMATE_GENERATOR (missing)",
+          "context": "Generate revised estimate incorporating the approved upgrade pricing, showing the original estimate, upgrade costs, and new total. Include itemized breakdown of upgrades.",
+          "validation": "Updated estimate shows new total with upgrade(s) itemized, making it clear what changed from the original estimate.",
+          "missing": true
+        },
+        {
+          "id": 6,
+          "tool": "list_clients",
+          "context": "Get client information for the client/project specified in the prompt to send the revised estimate with upgrade pricing.",
+          "validation": "Client contact info retrieved for delivering the revised estimate with upgrade pricing.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Email Parsing and Document Extraction",
+      "description": "Parse emails from contacts (architects, engineers, vendors) and extract key information and attachments",
+      "category": "Document & Email Automation",
+      "promptTemplate": "Parse email from [SENDER_NAME/TYPE] regarding [PROJECT_NAME/TOPIC] and extract [INFORMATION_NEEDED]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "EMAIL_INTEGRATION_SERVICE (missing)",
+          "context": "Connect to email system (Gmail, Outlook, etc.) to access emails from the specific sender or sender type mentioned in the prompt (e.g., architects, engineers, vendors, clients). Search by sender name or email address.",
+          "validation": "Email access established and emails from the specified sender/sender type retrieved successfully.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "EMAIL_PARSING_ENGINE (missing)",
+          "context": "Parse email content to extract key information relevant to the prompt: project name, dates, requirements, changes, specifications, decisions, etc. Focus on extracting the specific information requested in the prompt.",
+          "validation": "Email text parsed successfully with requested key data points extracted (dates, requirements, changes, etc.).",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "ATTACHMENT_EXTRACTION (missing)",
+          "context": "Extract attachments from the email (PDF plans, CAD files, spreadsheets, images, etc.) and save to the appropriate project folder. Identify file types and organize accordingly.",
+          "validation": "Attachments downloaded and associated with correct project, properly organized by file type.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "PDF_OCR_SERVICE (missing)",
+          "context": "Use OCR (Optical Character Recognition) to extract text and data from attached PDF documents (plans, specifications, invoices, etc.) to make content searchable and analyzable.",
+          "validation": "Text, specifications, and data successfully extracted from PDF attachments.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "create_action_item (Note)",
+          "context": "Create note action item (ActionTypeId=5) documenting the email content, sender, extracted information, and attached documents for project records. Include summary of key points from the email.",
+          "validation": "Action item created with email summary, sender information, extracted data points, and links/references to saved attachments.",
+          "missing": false
+        }
+      ]
+    },
+    {
+      "taskName": "Plan Analysis",
+      "description": "From building plans, count doors, windows, cabinets, and generate quantity takeoffs",
+      "category": "Document & Email Automation",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "PLAN_UPLOAD_SYSTEM (missing)",
+          "context": "Upload or access building plan files (PDF, CAD, image files).",
+          "validation": "Plan files loaded into analysis system.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "AI_PLAN_RECOGNITION (missing)",
+          "context": "Use AI/ML to analyze plans and identify architectural elements: doors, windows, cabinets, rooms, dimensions.",
+          "validation": "AI successfully identifies and counts major plan elements.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "QUANTITY_TAKEOFF_ENGINE (missing)",
+          "context": "Generate quantity takeoffs: count of doors by type/size, windows by type/size, linear feet of cabinets, square footage by room, etc.",
+          "validation": "Detailed quantity takeoff showing counts and measurements of all elements.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "MATERIAL_ESTIMATOR (missing)",
+          "context": "Convert quantity takeoffs into material estimates using standard formulas (e.g., sqft of drywall, linear feet of trim, etc.).",
+          "validation": "Material quantities calculated based on plan measurements.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "TAKEOFF_REPORT_GENERATOR (missing)",
+          "context": "Generate comprehensive takeoff report showing all quantities, measurements, and preliminary material estimates.",
+          "validation": "Report provides complete quantity takeoff ready for pricing/estimating.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Missed Action Items Alert",
+      "description": "Alert for unprocessed action items older than 24 hours",
+      "category": "Strategic Insights",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_action_items",
+          "context": "Retrieve all action items to analyze their creation dates and current status.",
+          "validation": "All action items returned with DateCreated and Status fields.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "DATE_FILTER_ENGINE (missing)",
+          "context": "Filter action items to find those created more than 24 hours ago that still have Status=1 (Open) or Status=2 (In Progress) without recent updates.",
+          "validation": "Filtered list shows only unprocessed action items older than 24 hours.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "get_action_item",
+          "context": "For each old unprocessed item, get full details including comments to understand if there's been any activity.",
+          "validation": "Full action item data shows whether item is truly stagnant or has recent activity in comments.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "ALERT_NOTIFICATION_SERVICE (missing)",
+          "context": "Send alert notifications (email, SMS, dashboard) about unprocessed action items to responsible supervisors/managers.",
+          "validation": "Alerts sent to appropriate personnel listing overdue action items.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "MISSED_ITEMS_REPORT (missing)",
+          "context": "Generate daily report of all missed/overdue action items for management review.",
+          "validation": "Report shows actionable list of items requiring attention with age and assigned personnel.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Blind Spots Report",
+      "description": "Summarize critical company updates or issues the owner might not be aware of",
+      "category": "Strategic Insights",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "list_action_items",
+          "context": "Analyze all recent action items to identify critical issues, cost changes, and schedule delays.",
+          "validation": "Action items show potential problem areas and critical updates.",
+          "missing": false
+        },
+        {
+          "id": 2,
+          "tool": "get_action_item_cost_change",
+          "context": "Review all cost changes to identify budget overruns that may not have been escalated to owner.",
+          "validation": "Cost changes reveal budget issues that need owner attention.",
+          "missing": false
+        },
+        {
+          "id": 3,
+          "tool": "get_action_item_schedule_change",
+          "context": "Review schedule changes to identify cumulative delays across projects.",
+          "validation": "Schedule changes show project timeline issues needing escalation.",
+          "missing": false
+        },
+        {
+          "id": 4,
+          "tool": "BLIND_SPOT_ANALYZER (missing)",
+          "context": "AI analysis to identify patterns and issues that may indicate blind spots: (1) Recurring problems not being addressed, (2) Cumulative small issues becoming big problems, (3) Communication gaps, (4) Unreported delays/overruns.",
+          "validation": "Analysis identifies potential blind spots and areas requiring owner awareness.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "EXECUTIVE_SUMMARY_GENERATOR (missing)",
+          "context": "Generate executive summary report highlighting critical issues, trends, and recommendations that owner should be aware of.",
+          "validation": "Concise report provides owner with visibility into potential blind spots and action needed.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Market Expansion Analysis",
+      "description": "Analyze potential new markets or geographic areas and propose market expansion strategy",
+      "category": "Strategic Insights",
+      "promptTemplate": "Analyze market opportunity in [GEOGRAPHIC_AREA/MARKET_TYPE] and propose expansion strategy for [SERVICE_TYPE]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "GIS_MAPPING_SERVICE (missing)",
+          "context": "Use GIS/mapping services to identify and map the target geographic area or market mentioned in the prompt. Gather demographic, economic, and relevant geographic data for the area.",
+          "validation": "Geographic data retrieved showing the extent and characteristics of the target market area specified in the request.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "PROPERTY_DATA_SERVICE (missing)",
+          "context": "Access property and market databases to estimate market size, number of potential projects, property values, and reconstruction/construction potential in the target area. Focus on the service type mentioned in the prompt.",
+          "validation": "Market data shows size, opportunity, and potential project volume in the target area for the specified service type.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "MARKET_RESEARCH_TOOL (missing)",
+          "context": "Research competitive landscape, regulatory requirements (permitting, licensing), market demand drivers, and any unique factors relevant to the target market (insurance, environmental, economic factors).",
+          "validation": "Market research provides comprehensive competitive landscape and identifies entry barriers and opportunities specific to the target area.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "STRATEGIC_ANALYSIS_ENGINE (missing)",
+          "context": "Analyze market opportunity using gathered data: (1) Estimated demand and project volume, (2) Competition level and market saturation, (3) Required resources, expertise, and investment, (4) Profit potential and margins, (5) Risks and challenges specific to this market.",
+          "validation": "Strategic analysis provides clear go/no-go recommendation with supporting data, financial projections, and risk assessment.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "MARKETING_STRATEGY_GENERATOR (missing)",
+          "context": "Generate comprehensive market expansion strategy document: target segments within the area, messaging and positioning, outreach methods and channels, potential partnerships, implementation timeline, and budget requirements.",
+          "validation": "Detailed strategy document ready for review including actionable steps, resource requirements, and expected outcomes.",
+          "missing": true
+        }
+      ]
+    },
+    {
+      "taskName": "Competitive Analysis and Feature Research",
+      "description": "Research competitor products/services to identify features, capabilities, and opportunities for improvement",
+      "category": "Strategic Insights",
+      "promptTemplate": "Analyze [COMPETITOR_NAME] and identify features/capabilities to [DUPLICATE/IMPROVE_UPON/LEARN_FROM]",
+      "sequence": [
+        {
+          "id": 1,
+          "tool": "WEB_SCRAPING_SERVICE (missing)",
+          "context": "Use web scraping tools to systematically collect information from the competitor's website (specified in prompt) about their features, pricing, capabilities, and value propositions.",
+          "validation": "Website content scraped including feature descriptions, screenshots, documentation, and any publicly available information about the competitor.",
+          "missing": true
+        },
+        {
+          "id": 2,
+          "tool": "FEATURE_EXTRACTION_ANALYZER (missing)",
+          "context": "Analyze scraped content to extract and categorize the competitor's features by functional areas (e.g., project management, scheduling, budgeting, client communication, reporting, etc.). Create structured list of capabilities.",
+          "validation": "Comprehensive list of competitor features organized by category with descriptions of functionality.",
+          "missing": true
+        },
+        {
+          "id": 3,
+          "tool": "FEATURE_GAP_ANALYSIS (missing)",
+          "context": "Compare the competitor's features against current JoeAPI/system capabilities to identify gaps, opportunities for improvement, and areas where we have advantages. Note features we have, lack, or could enhance.",
+          "validation": "Gap analysis clearly shows competitive positioning: which features we have, lack, or could improve relative to the competitor.",
+          "missing": true
+        },
+        {
+          "id": 4,
+          "tool": "PRIORITIZATION_ENGINE (missing)",
+          "context": "Prioritize identified features and improvements based on: (1) User demand and business value, (2) Development effort and complexity, (3) Competitive advantage potential, (4) Strategic fit with product vision.",
+          "validation": "Prioritized list of features/improvements to develop, ranked by value/feasibility ratio with clear rationale.",
+          "missing": true
+        },
+        {
+          "id": 5,
+          "tool": "FEATURE_ROADMAP_GENERATOR (missing)",
+          "context": "Generate product development roadmap showing which competitor features to implement or improve upon, including timeline, resource requirements, and expected business impact.",
+          "validation": "Roadmap provides clear development plan with phases, timelines, resource allocation, and expected outcomes for achieving competitive parity or advantage.",
+          "missing": true
+        }
+      ]
+    }
+  ]
+}

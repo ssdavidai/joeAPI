@@ -1,11 +1,11 @@
 # JoeAPI MCP Tools Reference
 
-**Version:** 1.1.0
-**Total Tools:** 31
+**Version:** 1.2.0
+**Total Tools:** 49
 
 ## Overview
 
-The JoeAPI MCP Server exposes 31 tools for interacting with the construction management system. These tools are organized into 8 main categories.
+The JoeAPI MCP Server exposes 49 tools for interacting with the construction management system. These tools are organized into 18 main categories covering basic operations and advanced financial/analytics capabilities.
 
 ---
 
@@ -327,22 +327,240 @@ Get paginated list of project managements
 
 ---
 
+## 12. Transactions (2 tools) - TIER 2
+
+### `list_transactions`
+Get QB transaction history with filters for project, account, date range, and transaction type
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+- `projectId` (string, optional) - Filter by project ID (GUID)
+- `accountId` (string, optional) - Filter by account ID (GUID)
+- `startDate` (string, optional) - Start date filter (ISO 8601 format)
+- `endDate` (string, optional) - End date filter (ISO 8601 format)
+- `transactionType` (string, optional) - Filter by transaction type (e.g., Bill, Check, Receipt)
+
+**Status:** ⚠️ Database schema needs verification (QBTransactions table)
+
+### `get_transaction_summary`
+Get aggregated transaction summaries grouped by project, account, vendor, or month
+
+**Parameters:**
+- `groupBy` (string, required) - Group by: project, account, vendor, or month
+- `projectId` (string, optional) - Filter by project ID (GUID)
+- `startDate` (string, optional) - Start date filter (ISO 8601 format)
+- `endDate` (string, optional) - End date filter (ISO 8601 format)
+
+**Status:** ⚠️ Database schema needs verification (QBTransactions table)
+
+---
+
+## 13. Job Balances (1 tool) - TIER 2
+
+### `list_job_balances`
+Get job-level financial balances showing current balance, receivables, and collected amounts
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+- `projectId` (string, optional) - Filter by specific project ID (GUID)
+
+**Status:** ⚠️ Database schema needs verification (JobBalances table)
+
+---
+
+## 14. Cost Variance (1 tool) - TIER 2
+
+### `get_cost_variance`
+Calculate cost variance by comparing original/revised estimates against actual costs from transactions
+
+**Parameters:**
+- `projectId` (string, optional) - Filter by project ID (GUID)
+- `categoryId` (string, optional) - Filter by estimate category ID (GUID)
+
+**Status:** ⚠️ Requires projectId parameter (working as designed)
+
+---
+
+## 15. Invoices (2 tools) - TIER 2
+
+### `list_invoices`
+Get paginated list of invoices with filtering by client, status, and date range
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+- `clientId` (string, optional) - Filter by client ID (GUID)
+- `status` (string, optional) - Filter by status (e.g., Paid, Unpaid, Overdue)
+- `startDate` (string, optional) - Start date filter (ISO 8601 format)
+- `endDate` (string, optional) - End date filter (ISO 8601 format)
+
+**Status:** ✅ Working
+
+### `get_invoice`
+Get a specific invoice by ID with all line items
+
+**Parameters:**
+- `id` (string, required) - Invoice ID (GUID)
+
+**Status:** ✅ Working
+
+---
+
+## 16. Schedule Revisions (2 tools) - TIER 2
+
+### `list_schedule_revisions`
+Get schedule revision history showing how schedules have changed over time
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+- `projectId` (string, optional) - Filter by project ID (GUID)
+
+**Status:** ✅ Working
+
+### `get_schedule_revision`
+Get a specific schedule revision by ID with all revision items
+
+**Parameters:**
+- `id` (string, required) - Schedule revision ID (GUID)
+
+**Status:** ✅ Working
+
+---
+
+## 17. Project Details (1 tool) - TIER 2
+
+### `get_project_details`
+Get comprehensive project overview combining schedule, financial status, team, and recent activity
+
+**Parameters:**
+- `id` (string, required) - Project ID (GUID)
+
+**Status:** ⚠️ Needs testing with valid project ID
+
+---
+
+## 18. Proposal Pipeline (1 tool) - TIER 2
+
+### `get_proposal_pipeline`
+Get sales pipeline analytics including conversion rates, proposal status breakdown, and recent activity
+
+**Parameters:**
+- `startDate` (string, optional) - Start date filter (ISO 8601 format)
+- `endDate` (string, optional) - End date filter (ISO 8601 format)
+
+**Status:** ⚠️ Route needs fixing (validation error)
+
+---
+
+## 19. Estimate Revisions (1 tool) - TIER 2
+
+### `get_estimate_revision_history`
+Get estimate revision history showing how estimates changed and calculate average overage percentage
+
+**Parameters:**
+- `projectId` (string, optional) - Filter by project ID (GUID)
+
+**Status:** ⚠️ Route needs fixing (validation error)
+
+---
+
+## 20. Cost Revisions (2 tools) - TIER 2
+
+### `list_cost_revisions`
+Get detailed cost revision history from the CostRevisions table
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+- `projectId` (string, optional) - Filter by project ID (GUID)
+
+**Status:** ✅ Working
+
+### `get_cost_revision`
+Get a specific cost revision by ID with all revision items
+
+**Parameters:**
+- `id` (string, required) - Cost revision ID (GUID)
+
+**Status:** ✅ Working
+
+---
+
+## 21. Deposits (2 tools) - TIER 2
+
+### `list_deposits`
+Get deposit/retainer tracking with usage calculations and threshold alerts
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+- `projectId` (string, optional) - Filter by project ID (GUID)
+
+**Status:** ⚠️ Database schema needs verification
+
+### `get_deposit_by_project`
+Get deposit details for a specific project
+
+**Parameters:**
+- `projectId` (string, required) - Project ID (GUID)
+
+**Status:** ⚠️ Database schema needs verification
+
+---
+
+## 22. Proposal Template Pricing (2 tools) - TIER 2
+
+### `get_proposal_template_pricing`
+Get standard pricing templates for estimates across all categories
+
+**Parameters:**
+- `page` (number, optional) - Page number (default: 1)
+- `limit` (number, optional) - Items per page (default: 20, max: 100)
+
+**Status:** ⚠️ Database schema needs verification (ProposalTemplates table)
+
+### `get_proposal_template_pricing_by_id`
+Get pricing template for a specific proposal template ID
+
+**Parameters:**
+- `id` (string, required) - Proposal template ID (GUID)
+
+**Status:** ⚠️ Database schema needs verification (ProposalTemplates table)
+
+---
+
 ## Summary by Category
 
-| Category | Tools |
-|----------|-------|
-| Clients | 3 |
-| Contacts | 2 |
-| Subcontractors | 1 |
-| Proposals | 3 |
-| Estimates | 1 |
-| Action Items (Base) | 3 |
-| Action Items (Comments) | 4 |
-| Action Items (Supervisors) | 3 |
-| Action Items (Cost Changes) | 4 |
-| Action Items (Schedule Changes) | 4 |
-| Project Resources | 3 |
-| **Total** | **31** |
+| Category | Tools | Status |
+|----------|-------|--------|
+| **Base Tier** | | |
+| Clients | 3 | ✅ |
+| Contacts | 2 | ✅ |
+| Subcontractors | 1 | ✅ |
+| Proposals | 3 | ✅ |
+| Estimates | 1 | ✅ |
+| Action Items (Base) | 3 | ✅ |
+| Action Items (Comments) | 4 | ✅ |
+| Action Items (Supervisors) | 3 | ✅ |
+| Action Items (Cost Changes) | 4 | ✅ |
+| Action Items (Schedule Changes) | 4 | ✅ |
+| Project Resources | 3 | ✅ |
+| **Tier 2: Financial & Analytics** | | |
+| Transactions | 2 | ⚠️ |
+| Job Balances | 1 | ⚠️ |
+| Cost Variance | 1 | ⚠️ |
+| Invoices | 2 | ✅ |
+| Schedule Revisions | 2 | ✅ |
+| Project Details | 1 | ⚠️ |
+| Proposal Pipeline | 1 | ⚠️ |
+| Estimate Revisions | 1 | ⚠️ |
+| Cost Revisions | 2 | ✅ |
+| Deposits | 2 | ⚠️ |
+| Proposal Template Pricing | 2 | ⚠️ |
+| **Total** | **49** | **6/12 Working** |
 
 ---
 
@@ -369,9 +587,34 @@ env:
 
 ---
 
-## Recent Changes (v1.1.0)
+## Recent Changes
 
-### Added (17 new tools)
+### v1.2.0 (2025-11-13) - Tier 2 Financial & Analytics
+
+**Added 18 new tools across 11 categories:**
+
+**Working (6 tools):**
+- ✅ Invoices (2 tools) - list_invoices, get_invoice
+- ✅ Schedule Revisions (2 tools) - list_schedule_revisions, get_schedule_revision
+- ✅ Cost Revisions (2 tools) - list_cost_revisions, get_cost_revision
+
+**Needs Schema Verification (6 tools):**
+- ⚠️ Transactions (2 tools) - list_transactions, get_transaction_summary
+- ⚠️ Job Balances (1 tool) - list_job_balances
+- ⚠️ Deposits (2 tools) - list_deposits, get_deposit_by_project
+- ⚠️ Proposal Template Pricing (2 tools) - get_proposal_template_pricing, get_proposal_template_pricing_by_id
+
+**Needs Route Fixing (2 tools):**
+- ⚠️ Proposal Pipeline (1 tool) - get_proposal_pipeline
+- ⚠️ Estimate Revisions (1 tool) - get_estimate_revision_history
+
+**Needs Testing (2 tools):**
+- ⚠️ Cost Variance (1 tool) - get_cost_variance (requires projectId)
+- ⚠️ Project Details (1 tool) - get_project_details (needs valid project ID)
+
+### v1.1.0 (2025-11-13) - Action Items Enhancement
+
+**Added 17 new tools:**
 - 4 tools for action item comments (list, create, update, delete)
 - 3 tools for action item supervisors (list, assign, remove)
 - 4 tools for action item cost changes (get, create, update, delete)
@@ -379,7 +622,7 @@ env:
 - Enhanced `create_action_item` to accept nested data
 - Enhanced `get_action_item` to return all nested data
 
-### Improved
+**Improved:**
 - Removed all debug logging for production readiness
 - Cleaner error handling
 - Simplified HTTP helper function
@@ -389,4 +632,4 @@ env:
 
 **Last Updated:** 2025-11-13
 **API Base URL:** https://joeapi.fly.dev
-**MCP Server Version:** 1.1.0
+**MCP Server Version:** 1.2.0

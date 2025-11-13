@@ -85,7 +85,7 @@ app.get('/', (req, res) => {
   }, 'Welcome to JoeAPI');
 });
 
-// API Routes
+// API Routes - Base Tier
 const contactsRouter = require('./routes/contacts.routes');
 const clientsRouter = require('./routes/clients.routes');
 const subcontractorsRouter = require('./routes/subcontractors.routes');
@@ -97,6 +97,20 @@ const projectschedulesRouter = require('./routes/projectschedules.routes');
 const projectscheduletasksRouter = require('./routes/projectscheduletasks.routes');
 const actionitemsRouter = require('./routes/actionitems.routes');
 
+// API Routes - Tier 2 (Financial & Analytics)
+const transactionsRouter = require('./routes/transactions.routes');
+const jobbalancesRouter = require('./routes/jobbalances.routes');
+const costvarianceRouter = require('./routes/costvariance.routes');
+const invoicesRouter = require('./routes/invoices.routes');
+const schedulerevisionsRouter = require('./routes/schedulerevisions.routes');
+const projectdetailsRouter = require('./routes/projectdetails.routes');
+const proposalpipelineRouter = require('./routes/proposalpipeline.routes');
+const estimaterevisionsRouter = require('./routes/estimaterevisions.routes');
+const costrevisionsRouter = require('./routes/costrevisions.routes');
+const depositsRouter = require('./routes/deposits.routes');
+const proposaltemplatepricingRouter = require('./routes/proposaltemplatepricing.routes');
+
+// Base Tier routes
 app.use('/api/v1/contacts', contactsRouter);
 app.use('/api/v1/clients', clientsRouter);
 app.use('/api/v1/subcontractors', subcontractorsRouter);
@@ -107,6 +121,19 @@ app.use('/api/v1/projectmanagements', projectmanagementsRouter);
 app.use('/api/v1/projectschedules', projectschedulesRouter);
 app.use('/api/v1/projectscheduletasks', projectscheduletasksRouter);
 app.use('/api/v1/actionitems', actionitemsRouter);
+
+// Tier 2 routes
+app.use('/api/v1/transactions', transactionsRouter);
+app.use('/api/v1/job-balances', jobbalancesRouter);
+app.use('/api/v1/cost-variance', costvarianceRouter);
+app.use('/api/v1/invoices', invoicesRouter);
+app.use('/api/v1/schedule-revisions', schedulerevisionsRouter);
+app.use('/api/v1/projects', projectdetailsRouter);
+app.use('/api/v1/proposals', proposalpipelineRouter); // Adds /proposals/pipeline
+app.use('/api/v1/estimates', estimaterevisionsRouter); // Adds /estimates/revision-history
+app.use('/api/v1/cost-revisions', costrevisionsRouter);
+app.use('/api/v1/deposits', depositsRouter);
+app.use('/api/v1/proposal-templates', proposaltemplatepricingRouter);
 
 // 404 handler (must be after all routes)
 app.use(notFoundHandler);
