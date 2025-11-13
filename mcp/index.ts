@@ -26,8 +26,6 @@ export const configSchema = z.object({
     .describe('Base URL for JoeAPI server'),
 });
 
-type Config = z.infer<typeof configSchema>;
-
 // Helper function to call JoeAPI
 async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestInit = {}) {
   const url = `${baseUrl}${endpoint}`;
@@ -525,7 +523,7 @@ const tools: Tool[] = [
 ];
 
 // Default export: function that creates the MCP server
-export default function createServer({ config }: { config: Config }) {
+export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
   const baseUrl = config.JOEAPI_BASE_URL;
 
   // Create MCP server
