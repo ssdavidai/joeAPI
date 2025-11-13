@@ -4,9 +4,6 @@
 name: "JoeAPI Construction Management"
 runtime: "typescript"
 
-# Export configuration schema for Smithery
-configSchema: true
-
 # Default environment variables
 # Users can override these when they install the server
 env:
