@@ -13,6 +13,8 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
@@ -765,6 +767,215 @@ const tools: Tool[] = [
   },
 ];
 
+// Define workflow prompts for common construction management tasks
+const prompts = [
+  {
+    name: 'work_in_process_report',
+    description: 'Generate a comprehensive work-in-process (WIP) report showing all active projects with completion status, costs vs budget, current balances, and outstanding issues',
+    arguments: [
+      {
+        name: 'format',
+        description: 'Output format: summary, detailed, or executive',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'detailed_budget_tracking',
+    description: 'Report how far a specific job is over/under budget, including amount and percentage variance by category',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) or project name to analyze',
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'deposit_tracking',
+    description: 'Track owner deposits and current balance on specific job accounts, showing initial deposit, draws made, and remaining balance',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) to check deposits for (optional - if not provided, shows all projects)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'cost_to_estimate_report',
+    description: 'Provide real-time cost vs. estimate tracking report showing original estimate, revisions, actual costs, and variance analysis',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) or project name (optional - if not provided, shows all projects)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'receivables_report',
+    description: 'Generate report on supervision fees collected and outstanding receivables, broken down by client with aging',
+    arguments: [],
+  },
+  {
+    name: 'gross_receipts_forecast',
+    description: 'Project gross receipts for the coming month based on scheduled invoices, new proposal deposits, and deposit draws',
+    arguments: [
+      {
+        name: 'months',
+        description: 'Number of months to forecast (default: 1)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'job_queue_summary',
+    description: 'Report on number of homes in queue (pending proposals), under construction (active projects), and upcoming pipeline',
+    arguments: [],
+  },
+  {
+    name: 'projected_income',
+    description: 'Estimate expected monthly income from active proposals and ongoing projects with payment schedules',
+    arguments: [
+      {
+        name: 'months',
+        description: 'Number of months to project (default: 1)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'revised_estimate_analysis',
+    description: 'Show history of revised estimates per job and calculate average overage across all projects',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) for specific analysis (optional - if not provided, analyzes all)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'job_benchmarking',
+    description: 'Calculate average cost and duration of specific job types (e.g., flooring, framing, insulation) from historical completed projects',
+    arguments: [
+      {
+        name: 'jobType',
+        description: 'Type of work to benchmark (e.g., flooring, framing, plumbing)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'cost_per_square_foot_report',
+    description: 'Break down costs by trade (e.g., drywall, lumber, paint) based on square footage for completed projects',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) for specific analysis (optional)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'change_order_tracking',
+    description: 'Track and report on all cost revisions (labeled as "revised estimates" for cost-plus jobs) with complete history',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) to track revisions for (optional)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'upgrade_pricing',
+    description: 'Price out client upgrade requests using standard pricing templates and create revised estimate',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) for the upgrade',
+        required: true,
+      },
+      {
+        name: 'upgradeItems',
+        description: 'Description of items to upgrade (e.g., "premium fixtures in master bath")',
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'update_schedule',
+    description: 'Extend or adjust project schedule by a specified number of days due to delays (painting, plumbing, weather, material delivery, etc.)',
+    arguments: [
+      {
+        name: 'projectName',
+        description: 'Name or ID of the project to update',
+        required: true,
+      },
+      {
+        name: 'numberOfDays',
+        description: 'Number of days to extend the schedule',
+        required: true,
+      },
+      {
+        name: 'reason',
+        description: 'Reason for delay (e.g., "plumbing delay", "weather", "material delivery")',
+        required: true,
+      },
+      {
+        name: 'taskName',
+        description: 'Specific task affected (optional - if not provided, extends entire schedule)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'missed_action_items_alert',
+    description: 'Alert for unprocessed action items older than 24 hours that need attention',
+    arguments: [
+      {
+        name: 'hoursThreshold',
+        description: 'Hour threshold for considering items overdue (default: 24)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'blind_spots_report',
+    description: 'Analyze all action items, cost changes, and schedule changes to identify critical issues or patterns that may need owner attention',
+    arguments: [],
+  },
+  {
+    name: 'generate_job_status_report',
+    description: 'Create weekly job status report using action items and comments, organized by project',
+    arguments: [
+      {
+        name: 'projectId',
+        description: 'Project ID (GUID) for specific project report (optional)',
+        required: false,
+      },
+      {
+        name: 'days',
+        description: 'Number of days to include in report (default: 7)',
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'plan_analysis',
+    description: 'Analyze building plans to count doors, windows, cabinets, and generate quantity takeoffs (Note: Claude can analyze uploaded images/PDFs directly)',
+    arguments: [
+      {
+        name: 'planDescription',
+        description: 'Description of the plan or what needs to be counted',
+        required: true,
+      },
+    ],
+  },
+];
+
 // Default export: function that creates the MCP server
 export default function createServer({ config }: { config: z.infer<typeof configSchema> }) {
   const baseUrl = config.JOEAPI_BASE_URL;
@@ -778,6 +989,7 @@ export default function createServer({ config }: { config: z.infer<typeof config
     {
       capabilities: {
         tools: {},
+        prompts: {},
       },
     }
   );
@@ -786,6 +998,306 @@ export default function createServer({ config }: { config: z.infer<typeof config
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools,
   }));
+
+  // List available prompts
+  server.setRequestHandler(ListPromptsRequestSchema, async () => ({
+    prompts,
+  }));
+
+  // Get specific prompt with instructions
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+
+    const prompt = prompts.find(p => p.name === name);
+    if (!prompt) {
+      throw new Error(`Prompt not found: ${name}`);
+    }
+
+    // Build the prompt message with step-by-step instructions from joetasks.json
+    let instructions = '';
+
+    // Add task-specific instructions based on the prompt name
+    switch (name) {
+      case 'work_in_process_report':
+        instructions = `To generate a Work-in-Process (WIP) Report, follow these steps:
+
+1. Use list_project_managements to retrieve all active projects
+2. For each active project, use list_project_schedule_tasks to get task completion status
+3. Use list_action_items to get recent cost changes and schedule changes
+4. Use list_transactions filtered by project to get actual costs incurred
+5. Use list_job_balances to get current financial position for each project
+6. Analyze and format the data into a comprehensive WIP report showing:
+   - All active projects with completion percentages
+   - Costs incurred vs. budget
+   - Current job balances
+   - Outstanding action items and issues
+   - Estimated completion dates`;
+        break;
+
+      case 'detailed_budget_tracking':
+        instructions = `To track budget variance for a job:
+
+1. Use list_estimates with projectId to get the original budget
+2. Use list_cost_revisions with projectId to get all budget adjustments
+3. Use list_transactions filtered by projectId to get actual costs spent
+4. Use get_cost_variance with projectId to calculate variance analysis
+5. Format the report showing:
+   - Original estimate by category
+   - All revisions with dates and reasons
+   - Actual costs to date
+   - Variance in dollars and percentage (over/under budget)`;
+        break;
+
+      case 'deposit_tracking':
+        instructions = `To track deposits and balances:
+
+1. Use list_deposits ${args?.projectId ? `filtered by projectId` : 'to get all projects'}
+2. ${args?.projectId ? `Use get_deposit_by_project with projectId for detailed info` : 'For each project, use get_deposit_by_project for details'}
+3. Use list_transactions filtered by deposit accounts to see payment history
+4. Use list_project_managements to link deposits to project/client info
+5. Generate report showing:
+   - Initial deposit amount
+   - All draws/payments made with dates
+   - Remaining balance
+   - Percentage of deposit used`;
+        break;
+
+      case 'cost_to_estimate_report':
+        instructions = `To generate cost vs. estimate tracking:
+
+1. Use list_estimates to get original budgets
+2. Use list_cost_revisions to get complete revision history
+3. Use list_transactions to get actual costs by project and category
+4. Use get_cost_variance to calculate variance analysis
+5. Format report showing for each project:
+   - Original estimate
+   - Revised estimate (with all changes)
+   - Actual costs to date
+   - Variance in dollars and percentage by category`;
+        break;
+
+      case 'receivables_report':
+        instructions = `To generate receivables report:
+
+1. Use list_invoices to get all invoices (paid and outstanding)
+2. Use list_transactions filtered by supervision accounts for payment history
+3. Use list_clients to associate receivables with clients
+4. Use list_job_balances to get per-project financial status
+5. Calculate and format report showing:
+   - Total supervision fees collected
+   - Total outstanding receivables
+   - Breakdown by client with aging (days outstanding)`;
+        break;
+
+      case 'gross_receipts_forecast':
+        instructions = `To forecast gross receipts:
+
+1. Use list_project_managements to get active projects and completion status
+2. Use list_proposals to get recently accepted proposals (new deposits)
+3. Use list_invoices to identify upcoming payments due
+4. Use list_deposits to include expected deposit draws
+5. Calculate forecast by summing:
+   - Scheduled milestone payments from invoices
+   - New proposal deposits
+   - Expected deposit draws
+   - Apply historical collection rate adjustments
+6. Format with breakdown by source and confidence levels`;
+        break;
+
+      case 'job_queue_summary':
+        instructions = `To summarize job queue and pipeline:
+
+1. Use get_proposal_pipeline to get comprehensive pipeline analytics
+2. Use list_project_managements to count active projects
+3. Use list_project_schedules to determine current vs. upcoming work
+4. Categorize and format showing:
+   - Queue: proposals pending acceptance (counts & total values)
+   - Under Construction: active projects in progress
+   - Upcoming: accepted proposals not yet started
+   - Include expected start/completion dates`;
+        break;
+
+      case 'projected_income':
+        instructions = `To project monthly income:
+
+1. Use list_proposals to get active proposals with amounts
+2. Use list_proposal_lines to understand payment schedules
+3. Use list_project_managements to get completion % and remaining payments
+4. Calculate projections considering:
+   - Expected proposal acceptances (with historical rate)
+   - Scheduled milestone payments from active projects
+   - Completion-based payments
+5. Format with breakdown by source and confidence levels`;
+        break;
+
+      case 'revised_estimate_analysis':
+        instructions = `To analyze estimate revisions:
+
+1. Use list_estimates to get original budgets
+2. Use get_estimate_revision_history ${args?.projectId ? 'for the specific project' : 'for all projects'}
+3. Use list_cost_revisions for detailed revision data
+4. Analyze to calculate:
+   - Total revised amount per job
+   - Overage (revised - original) per job
+   - Average overage across all jobs
+   - Common revision categories
+5. Format with trends and patterns`;
+        break;
+
+      case 'job_benchmarking':
+        instructions = `To benchmark job costs and durations:
+
+1. Use list_project_managements to get completed projects
+2. Use list_transactions for historical costs by category/trade
+3. Use list_schedule_revisions for actual duration data
+4. Filter to specific job type if provided: ${args?.jobType || 'all types'}
+5. Calculate and format benchmarks:
+   - Average cost by task type
+   - Average duration by task type
+   - Cost/duration by project size
+   - Standard deviations and ranges`;
+        break;
+
+      case 'cost_per_square_foot_report':
+        instructions = `To calculate cost per square foot:
+
+1. Use get_project_details to get square footage for projects
+2. Use list_transactions to get costs by trade/category
+3. Calculate cost per sqft for each trade: Cost ÷ Total SqFt
+4. ${args?.projectId ? 'Analyze specific project' : 'Compare across multiple projects'}
+5. Format report showing:
+   - Cost per sqft by trade (drywall, lumber, paint, etc.)
+   - Project comparisons
+   - Averages and outliers`;
+        break;
+
+      case 'change_order_tracking':
+        instructions = `To track change orders (revised estimates):
+
+1. Use list_cost_revisions to get all estimate changes
+2. Use get_estimate_revision_history for complete audit trail
+3. Use existing action items or create new ones:
+   - create_action_item with ActionTypeId=8 (General Change Order)
+   - Label as "Revised Estimate" for cost-plus jobs
+4. Use create_action_item_cost_change to add structured data
+5. Format tracking showing:
+   - Revision history with dates and amounts
+   - Cumulative impact on budget
+   - Categories affected`;
+        break;
+
+      case 'upgrade_pricing':
+        instructions = `To price client upgrades:
+
+Required: projectId="${args?.projectId || 'PROJECT_ID'}", upgradeItems="${args?.upgradeItems || 'ITEM_DESCRIPTION'}"
+
+1. Use get_proposal_template_pricing to get standard baseline costs
+2. Calculate upgrade differential:
+   - Upgrade cost - Standard cost + Additional labor
+3. Use create_action_item with ActionTypeId=1 (Cost Change)
+4. Use create_action_item_cost_change to add upgrade details
+5. Use list_clients to get client info for delivery
+6. Format revised estimate showing:
+   - Original estimate
+   - Upgrade costs itemized
+   - New total`;
+        break;
+
+      case 'update_schedule':
+        instructions = `To update project schedule:
+
+Required: projectName="${args?.projectName || 'PROJECT_NAME'}", numberOfDays=${args?.numberOfDays || 'DAYS'}, reason="${args?.reason || 'REASON'}"
+
+1. Use list_project_schedules to find the project schedule
+2. Use list_project_schedule_tasks to identify specific tasks
+   ${args?.taskName ? `- Look for task: "${args.taskName}"` : '- If no specific task, extend all tasks'}
+3. Create schedule change documentation:
+   - create_action_item with ActionTypeId=2 (Schedule Change)
+   - Include ScheduleChange object with NoOfDays and ConstructionTaskId
+4. NOTE: API endpoint exists for updating tasks but not yet in MCP
+   - For now, document the change with action items
+   - Actual task date updates coming soon`;
+        break;
+
+      case 'missed_action_items_alert':
+        instructions = `To identify overdue action items:
+
+1. Use list_action_items to get all action items
+2. Filter to items created more than ${args?.hoursThreshold || '24'} hours ago
+   - Status = 1 (Open) or 2 (In Progress)
+3. Use get_action_item for details on each old item
+4. Format alert showing:
+   - List of overdue items with age
+   - Assigned personnel
+   - Priority/urgency indicators
+5. Consider creating reminder action items for critical items`;
+        break;
+
+      case 'blind_spots_report':
+        instructions = `To identify potential blind spots:
+
+1. Use list_action_items to get all recent action items
+2. Use get_action_item_cost_change to review budget overruns
+3. Use get_action_item_schedule_change to identify cumulative delays
+4. Analyze patterns indicating blind spots:
+   - Recurring problems not being addressed
+   - Cumulative small issues becoming big problems
+   - Communication gaps
+   - Unreported delays/overruns
+5. Format executive summary with:
+   - Critical issues needing attention
+   - Trends and patterns
+   - Recommendations`;
+        break;
+
+      case 'generate_job_status_report':
+        instructions = `To generate job status report:
+
+1. Use list_action_items ${args?.projectId ? `filtered by projectId` : 'for all projects'}
+   - Filter to last ${args?.days || '7'} days
+2. Use list_action_item_comments for key items to understand discussions
+3. Group by project showing:
+   - What work was discussed
+   - What was completed
+   - What's pending
+   - Key decisions made
+4. Format as structured status report`;
+        break;
+
+      case 'plan_analysis':
+        instructions = `To analyze building plans:
+
+Note: As Claude, I can analyze uploaded images and PDFs directly!
+
+For plan: ${args?.planDescription || 'PLAN_DESCRIPTION'}
+
+Steps:
+1. If user provides image/PDF, use native vision capabilities to analyze
+2. Count elements: doors, windows, cabinets, fixtures
+3. Measure dimensions and calculate square footage
+4. Generate quantity takeoffs with counts by type/size
+5. Convert to material estimates using standard formulas
+6. Format comprehensive takeoff report
+
+Ask user to upload the plan image or PDF file!`;
+        break;
+
+      default:
+        instructions = `This workflow prompt (${name}) is available but specific step-by-step instructions are not yet defined. Please use the available tools creatively to accomplish this task.`;
+    }
+
+    return {
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: instructions,
+          },
+        },
+      ],
+    };
+  });
 
   // Handle tool calls
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
