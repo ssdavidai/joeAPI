@@ -285,7 +285,7 @@ export default function createServer({ config }: { config: Config }) {
   const server = new Server(
     {
       name: 'joeapi-mcp',
-      version: '1.0.2',
+      version: '1.0.3',
     },
     {
       capabilities: {
@@ -433,17 +433,25 @@ export default function createServer({ config }: { config: Config }) {
 
         case 'create_action_item': {
           // Debug: Log the request
-          console.error('[DEBUG] Creating action item:', JSON.stringify(args));
+          console.error('[DEBUG] Creating action item with args:', JSON.stringify(args));
+          console.error('[DEBUG] POST URL:', `${baseUrl}/api/v1/actionitems`);
+
           const createResult: any = await callJoeAPI(baseUrl, '/api/v1/actionitems', {
             method: 'POST',
             body: JSON.stringify(args),
           });
-          console.error('[DEBUG] Create response:', JSON.stringify(createResult));
+
+          console.error('[DEBUG] Response keys:', Object.keys(createResult));
+          console.error('[DEBUG] Response.success:', createResult.success);
+          console.error('[DEBUG] Response.message:', createResult.message);
+          console.error('[DEBUG] Response.data type:', Array.isArray(createResult.data) ? 'Array' : typeof createResult.data);
+          console.error('[DEBUG] Full response:', JSON.stringify(createResult).substring(0, 500));
 
           // Validate we got a create response, not a list response
           if (createResult.data && Array.isArray(createResult.data)) {
-            console.error('[ERROR] Got list response instead of create response!');
-            throw new Error('API returned list instead of created item. This is likely a server-side issue.');
+            console.error('[ERROR] API returned an array with', createResult.data.length, 'items');
+            console.error('[ERROR] Expected single created item object');
+            throw new Error(`API returned list instead of created item. Received array with ${createResult.data.length} items. Check if validation failed or wrong endpoint called.`);
           }
 
           result = createResult;
