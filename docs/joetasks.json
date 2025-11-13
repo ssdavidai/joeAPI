@@ -220,16 +220,16 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "list_proposals",
-          "context": "Get all proposals to identify homes/jobs in the queue (proposals pending acceptance).",
-          "validation": "Proposals list shows status field that can distinguish between pipeline (pending) and accepted.",
+          "tool": "get_proposal_pipeline",
+          "context": "Get comprehensive pipeline analytics showing all proposals categorized by stage (pending, accepted, in progress, completed) with counts, total values, and timeline information.",
+          "validation": "Pipeline data provides complete breakdown of proposals by stage with financial metrics and timing.",
           "missing": false
         },
         {
           "id": 2,
           "tool": "list_project_managements",
-          "context": "Retrieve all active projects to count homes currently under construction.",
-          "validation": "Project list shows active construction projects with their current status.",
+          "context": "Retrieve all active projects to count homes currently under construction and verify current work status.",
+          "validation": "Project list shows active construction projects with their current status for verification.",
           "missing": false
         },
         {
@@ -241,15 +241,8 @@
         },
         {
           "id": 4,
-          "tool": "PIPELINE_ANALYTICS (missing)",
-          "context": "Analyze all the data to categorize homes into: (1) Queue - proposals pending client acceptance, (2) Under Construction - active projects with scheduled tasks in progress, (3) Upcoming Pipeline - accepted proposals not yet started or projects scheduled to begin soon.",
-          "validation": "Clear categorization showing counts in each stage: X homes in queue, Y under construction, Z in upcoming pipeline.",
-          "missing": true
-        },
-        {
-          "id": 5,
           "tool": "GENERATE_QUEUE_SUMMARY_REPORT (missing)",
-          "context": "Create a summary report visualizing the pipeline with counts, total values, and expected timeline for each category.",
+          "context": "Create a formatted summary report visualizing the pipeline with counts, total values, and expected timeline for each category: (1) Queue - proposals pending acceptance, (2) Under Construction - active projects in progress, (3) Upcoming - accepted proposals not yet started.",
           "validation": "Report shows clear metrics: number of homes in each stage, total contract values, expected start/completion dates.",
           "missing": true
         }
@@ -276,22 +269,22 @@
         },
         {
           "id": 3,
-          "tool": "PAYMENT_SCHEDULE_SYSTEM (missing)",
-          "context": "Access detailed payment schedules to identify all invoices and payments due in the next month from all active projects.",
-          "validation": "List of upcoming payments with dates, amounts, and client information.",
-          "missing": true
+          "tool": "list_invoices",
+          "context": "Get all invoices to identify payments due in the next month from all active projects, including amounts, dates, and client information.",
+          "validation": "Invoice list shows upcoming payments with due dates within the forecast period.",
+          "missing": false
         },
         {
           "id": 4,
-          "tool": "ACCOUNTS_RECEIVABLE_SYSTEM (missing)",
-          "context": "Check accounts receivable to include expected payments from outstanding invoices that are due within the month.",
-          "validation": "Outstanding receivables with expected payment dates within the forecast period.",
-          "missing": true
+          "tool": "list_deposits",
+          "context": "Check deposit/retainer balances to include expected deposit draws and remaining retainer funds available for billing.",
+          "validation": "Deposit data shows available retainer funds and deposit usage patterns for revenue forecasting.",
+          "missing": false
         },
         {
           "id": 5,
           "tool": "GROSS_RECEIPTS_CALCULATOR (missing)",
-          "context": "Calculate total gross receipts forecast by summing: (1) Scheduled milestone payments, (2) New proposal deposits, (3) Expected receivables collections, (4) Historical collection rate adjustments.",
+          "context": "Calculate total gross receipts forecast by summing: (1) Scheduled milestone payments from invoices, (2) New proposal deposits, (3) Expected deposit draws, (4) Historical collection rate adjustments.",
           "validation": "Total gross receipts projection with breakdown by source and confidence intervals based on historical collection rates.",
           "missing": true
         }
@@ -325,15 +318,22 @@
         },
         {
           "id": 4,
-          "tool": "COST_TRACKING_SYSTEM (missing)",
-          "context": "Access cost tracking to determine how much has been spent on each work-in-process job versus the budget.",
-          "validation": "Cost data shows actual costs incurred to date vs. budgeted amounts for each WIP project.",
-          "missing": true
+          "tool": "list_transactions",
+          "context": "Access QB transaction data to determine actual costs incurred on each work-in-process job, filtered by project ClassID to get spending to date.",
+          "validation": "Transaction data shows actual costs spent on each WIP project by category (labor, materials, subcontractors).",
+          "missing": false
         },
         {
           "id": 5,
+          "tool": "list_job_balances",
+          "context": "Get current job balance for each WIP project showing the financial position (balance owed or credit available).",
+          "validation": "Job balances provide current financial status for each work-in-process project.",
+          "missing": false
+        },
+        {
+          "id": 6,
           "tool": "WIP_REPORT_GENERATOR (missing)",
-          "context": "Generate comprehensive WIP report showing: (1) All active projects, (2) Completion percentage, (3) Costs incurred vs. budget, (4) Estimated completion date, (5) Outstanding issues/action items.",
+          "context": "Generate comprehensive WIP report showing: (1) All active projects, (2) Completion percentage, (3) Costs incurred vs. budget, (4) Current balances, (5) Estimated completion date, (6) Outstanding issues/action items.",
           "validation": "WIP report provides complete status of all ongoing work with financial and timeline metrics.",
           "missing": true
         }
@@ -346,17 +346,17 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "ACCOUNTS_RECEIVABLE_SYSTEM (missing)",
-          "context": "Access the accounts receivable system to get all outstanding invoices, particularly those related to supervision fees.",
-          "validation": "AR data shows unpaid invoices with amounts, dates, and aging information.",
-          "missing": true
+          "tool": "list_invoices",
+          "context": "Get all invoices from the system to identify outstanding supervision fee invoices and paid invoices for receivables analysis.",
+          "validation": "Invoice data shows amounts, dates, payment status, and aging information for all supervision fees.",
+          "missing": false
         },
         {
           "id": 2,
-          "tool": "PAYMENT_COLLECTION_SYSTEM (missing)",
-          "context": "Retrieve all collected supervision fee payments to calculate total supervision collected to date.",
-          "validation": "Payment records show all supervision fees that have been successfully collected.",
-          "missing": true
+          "tool": "list_transactions",
+          "context": "Retrieve QB transactions filtered by supervision-related accounts to get payment collection history and calculate total collected to date.",
+          "validation": "Transaction records show all supervision fee payments that have been successfully collected.",
+          "missing": false
         },
         {
           "id": 3,
@@ -367,10 +367,10 @@
         },
         {
           "id": 4,
-          "tool": "RECEIVABLES_CALCULATOR (missing)",
-          "context": "Calculate: (1) Total supervision fees collected (paid), (2) Total outstanding supervision receivables (unpaid), (3) Aging analysis showing how long receivables have been outstanding.",
-          "validation": "Clear breakdown of collected vs. outstanding supervision fees with aging details.",
-          "missing": true
+          "tool": "list_job_balances",
+          "context": "Get current job balances to understand the financial position of each project, including amounts owed or credit available.",
+          "validation": "Job balances provide per-project financial status relevant to receivables analysis.",
+          "missing": false
         },
         {
           "id": 5,
@@ -395,34 +395,27 @@
         },
         {
           "id": 2,
-          "tool": "list_action_items",
-          "context": "Get all action items, particularly cost change action items (ActionTypeId=1) that show budget adjustments.",
-          "validation": "Cost change action items show all budget modifications made after the original estimate.",
+          "tool": "list_cost_revisions",
+          "context": "Get all cost revisions for each project showing the complete history of budget changes and estimate adjustments.",
+          "validation": "Cost revision history shows all budget modifications with dates, amounts, and reasons.",
           "missing": false
         },
         {
           "id": 3,
-          "tool": "get_action_item_cost_change",
-          "context": "For each cost change action item, retrieve the detailed cost change data including amount and estimate category affected.",
-          "validation": "Cost change details show how much each category's budget was adjusted and why.",
+          "tool": "list_transactions",
+          "context": "Retrieve QB transaction data filtered by project to get actual costs incurred to date, broken down by account/category (labor, materials, subcontractors).",
+          "validation": "Transaction data shows actual costs spent on each project by category.",
           "missing": false
         },
         {
           "id": 4,
-          "tool": "ACTUAL_COST_TRACKING_SYSTEM (missing)",
-          "context": "Access the actual cost tracking system to get real costs incurred to date for each project, broken down by estimate category/trade.",
-          "validation": "Actual costs show what has actually been spent on each category of work (labor, materials, subcontractors, etc.).",
-          "missing": true
+          "tool": "get_cost_variance",
+          "context": "Calculate cost variance analysis comparing original estimate, revised estimate (with approved changes), and actual costs to date. Shows variance in dollars and percentage over/under budget.",
+          "validation": "Variance report shows for each category: estimated, actual, variance in dollars and percentage.",
+          "missing": false
         },
         {
           "id": 5,
-          "tool": "COST_VARIANCE_CALCULATOR (missing)",
-          "context": "Calculate variance analysis: (1) Original estimate by category, (2) Revised estimate (original + approved cost changes), (3) Actual costs to date, (4) Variance (actual vs. revised estimate), (5) Percentage over/under budget.",
-          "validation": "Variance report shows for each category: estimated, actual, variance in dollars and percentage.",
-          "missing": true
-        },
-        {
-          "id": 6,
           "tool": "REALTIME_COST_DASHBOARD (missing)",
           "context": "Generate real-time dashboard showing cost vs. estimate status for all active projects, highlighting categories that are over/under budget.",
           "validation": "Dashboard provides immediate visibility into cost performance across all projects with red/yellow/green indicators for budget status.",
@@ -444,16 +437,16 @@
         },
         {
           "id": 2,
-          "tool": "list_action_items",
-          "context": "Retrieve all cost change action items (ActionTypeId=1) to track all budget revisions made to each job.",
-          "validation": "Cost change action items show all budget modifications across all jobs.",
+          "tool": "get_estimate_revision_history",
+          "context": "Retrieve complete revision history for each estimate showing all changes from original to current, with dates, amounts, and reasons for each revision.",
+          "validation": "Estimate revision history provides complete audit trail of all budget changes per job.",
           "missing": false
         },
         {
           "id": 3,
-          "tool": "get_action_item_cost_change",
-          "context": "For each cost change action item, get the detailed cost change data to build a history of revisions per job.",
-          "validation": "Cost change details show amounts, categories, and dates of each revision.",
+          "tool": "list_cost_revisions",
+          "context": "Get detailed cost revision data for all projects to analyze revision patterns, amounts, and categories affected.",
+          "validation": "Cost revision data shows amounts, categories, dates, and cumulative impact for each job.",
           "missing": false
         },
         {
@@ -761,31 +754,24 @@
         },
         {
           "id": 2,
-          "tool": "list_action_items",
-          "context": "Retrieve all cost change action items for the job to get revised budget.",
-          "validation": "All budget adjustments retrieved.",
+          "tool": "list_cost_revisions",
+          "context": "Retrieve all cost revisions for the job to get complete history of budget adjustments.",
+          "validation": "All budget adjustments retrieved with dates, amounts, and categories.",
           "missing": false
         },
         {
           "id": 3,
-          "tool": "get_action_item_cost_change",
-          "context": "Get detailed cost change data to calculate total revised budget.",
-          "validation": "Cost changes show amounts and categories for accurate revised budget calculation.",
+          "tool": "list_transactions",
+          "context": "Get QB transaction data filtered by project ClassID to retrieve actual costs spent on the job to date, broken down by account/category.",
+          "validation": "Actual costs show all expenditures by category (labor, materials, subcontractors, etc.).",
           "missing": false
         },
         {
           "id": 4,
-          "tool": "ACTUAL_COST_SYSTEM (missing)",
-          "context": "Retrieve actual costs spent on the job to date.",
-          "validation": "Actual costs show all expenditures by category.",
-          "missing": true
-        },
-        {
-          "id": 5,
-          "tool": "BUDGET_VARIANCE_CALCULATOR (missing)",
-          "context": "Calculate budget variance: (1) Revised budget = Original + Changes, (2) Variance = Actual - Revised, (3) Percentage = (Variance / Revised) * 100.",
-          "validation": "Report shows job is $X over budget (Y% over revised budget).",
-          "missing": true
+          "tool": "get_cost_variance",
+          "context": "Calculate budget variance showing: (1) Original estimate, (2) Revised estimate with all changes, (3) Actual costs to date, (4) Variance amount and percentage over/under budget.",
+          "validation": "Report shows job is $X over budget (Y% over revised budget) with detailed variance by category.",
+          "missing": false
         }
       ]
     },
@@ -796,37 +782,37 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "DEPOSIT_TRACKING_SYSTEM (missing)",
-          "context": "Access deposit tracking system to get initial owner deposits for each job/project.",
-          "validation": "Deposit records show initial deposit amounts and dates.",
-          "missing": true
+          "tool": "list_deposits",
+          "context": "Access deposit/retainer tracking to get initial owner deposits for each job/project, including deposit amounts and usage to date.",
+          "validation": "Deposit records show initial deposit amounts, amounts used, and current balances for all projects.",
+          "missing": false
         },
         {
           "id": 2,
-          "tool": "PAYMENT_HISTORY_SYSTEM (missing)",
-          "context": "Retrieve payment history showing all draws/payments made against the deposit.",
-          "validation": "Payment history shows all amounts withdrawn from deposit account.",
-          "missing": true
+          "tool": "get_deposit_by_project",
+          "context": "Get detailed deposit information for specific project, showing initial deposit, all draws/payments made against it, and remaining balance.",
+          "validation": "Detailed deposit data shows complete payment history and current balance for the project.",
+          "missing": false
         },
         {
           "id": 3,
-          "tool": "list_project_managements",
-          "context": "Get project information to associate deposits with specific jobs.",
-          "validation": "Project data links to deposit accounts.",
+          "tool": "list_transactions",
+          "context": "Retrieve QB transactions filtered by deposit/retainer accounts to see detailed payment history and draws made against deposits.",
+          "validation": "Transaction history shows all amounts withdrawn from deposit accounts with dates and descriptions.",
           "missing": false
         },
         {
           "id": 4,
-          "tool": "DEPOSIT_BALANCE_CALCULATOR (missing)",
-          "context": "Calculate current deposit balance: Initial Deposit - Total Payments Used = Current Balance.",
-          "validation": "Current balance calculated showing remaining deposit funds.",
-          "missing": true
+          "tool": "list_project_managements",
+          "context": "Get project information to associate deposits with specific jobs and clients for comprehensive reporting.",
+          "validation": "Project data provides context linking deposits to job details and client information.",
+          "missing": false
         },
         {
           "id": 5,
           "tool": "DEPOSIT_REPORT_GENERATOR (missing)",
-          "context": "Generate report showing: initial deposit, payments to date, current balance, and percentage of deposit used.",
-          "validation": "Report clearly shows deposit status for each job account.",
+          "context": "Generate formatted report showing: initial deposit, payments to date, current balance, and percentage of deposit used for each job.",
+          "validation": "Report clearly shows deposit status for each job account with usage percentages.",
           "missing": true
         }
       ]
@@ -838,10 +824,10 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "RETAINER_TRACKING_SYSTEM (missing)",
-          "context": "Monitor retainer balances for all active projects to calculate percentage used.",
-          "validation": "Retainer data shows initial amount, used amount, and percentage consumed.",
-          "missing": true
+          "tool": "list_deposits",
+          "context": "Monitor retainer/deposit balances for all active projects to calculate percentage used for each project.",
+          "validation": "Deposit data shows initial amount, used amount, remaining balance, and percentage consumed.",
+          "missing": false
         },
         {
           "id": 2,
@@ -887,17 +873,17 @@
         },
         {
           "id": 2,
-          "tool": "COST_HISTORY_SYSTEM (missing)",
-          "context": "Access historical cost data for completed projects broken down by trade/task type (flooring, framing, insulation, etc.).",
-          "validation": "Cost history shows actual costs by task type across multiple projects.",
-          "missing": true
+          "tool": "list_transactions",
+          "context": "Access QB transaction history for completed projects broken down by account/category to get actual costs by trade/task type (flooring, framing, insulation, etc.).",
+          "validation": "Transaction history shows actual costs by category across multiple completed projects.",
+          "missing": false
         },
         {
           "id": 3,
-          "tool": "DURATION_TRACKING_SYSTEM (missing)",
-          "context": "Retrieve historical duration data showing how long each task type took on past projects.",
-          "validation": "Duration data shows task completion times from historical projects.",
-          "missing": true
+          "tool": "list_schedule_revisions",
+          "context": "Retrieve schedule revision history to understand actual duration data for tasks, including delays and adjustments that affected completion times.",
+          "validation": "Schedule revision data provides insight into actual task durations and timeline variations from historical projects.",
+          "missing": false
         },
         {
           "id": 4,
@@ -922,17 +908,17 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "PROJECT_DETAILS_SYSTEM (missing)",
-          "context": "Retrieve project details including total square footage for each completed project.",
-          "validation": "Project square footage data available for cost/sqft calculations.",
-          "missing": true
+          "tool": "get_project_details",
+          "context": "Retrieve comprehensive project details including total square footage, project specifications, and metadata for each completed project.",
+          "validation": "Project details include square footage data available for cost/sqft calculations.",
+          "missing": false
         },
         {
           "id": 2,
-          "tool": "COST_BREAKDOWN_SYSTEM (missing)",
-          "context": "Get detailed cost breakdown by trade (drywall, lumber, paint, etc.) for each project.",
-          "validation": "Costs itemized by trade/material category for each project.",
-          "missing": true
+          "tool": "list_transactions",
+          "context": "Get QB transaction data for each project broken down by account/category to get detailed cost breakdown by trade (drywall, lumber, paint, etc.).",
+          "validation": "Transaction data provides costs itemized by trade/material category for each project.",
+          "missing": false
         },
         {
           "id": 3,
@@ -964,16 +950,16 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "list_action_items",
-          "context": "Retrieve all cost change action items which represent changes to the original estimate.",
-          "validation": "Cost change action items retrieved for tracking estimate revisions.",
+          "tool": "list_cost_revisions",
+          "context": "Retrieve all cost revisions which represent changes to the original estimate, providing complete revision history per job.",
+          "validation": "Cost revisions retrieved showing all estimate changes with dates, amounts, and categories.",
           "missing": false
         },
         {
           "id": 2,
-          "tool": "get_action_item_cost_change",
-          "context": "Get detailed cost change data including amounts, categories, and reasons for each revision.",
-          "validation": "Detailed cost change data shows what was revised and why.",
+          "tool": "get_estimate_revision_history",
+          "context": "Get comprehensive estimate revision history showing progression from original to current estimate with all intermediate changes.",
+          "validation": "Revision history provides complete audit trail of estimate changes over time.",
           "missing": false
         },
         {
@@ -985,10 +971,10 @@
         },
         {
           "id": 4,
-          "tool": "REVISION_TRACKING_SYSTEM (missing)",
-          "context": "Track all estimate revisions in a systematic way showing revision number, date, amount, and cumulative impact on budget.",
-          "validation": "Revision history clearly tracked with version numbers and cumulative totals.",
-          "missing": true
+          "tool": "create_action_item_cost_change",
+          "context": "Add detailed cost change data to track revision amount, category affected, and reason for change in a structured format.",
+          "validation": "Cost change data captured showing specific amounts and categories for the revision.",
+          "missing": false
         },
         {
           "id": 5,
@@ -1007,10 +993,10 @@
       "sequence": [
         {
           "id": 1,
-          "tool": "PRODUCT_PRICING_DATABASE (missing)",
-          "context": "Access pricing database to get current costs for the upgrade items specified in the prompt (e.g., premium fixtures, upgraded materials, additional features) including material and labor costs.",
-          "validation": "Pricing data retrieved for the specific upgrade products/features mentioned in the user's request.",
-          "missing": true
+          "tool": "get_proposal_template_pricing",
+          "context": "Access standard pricing templates to get baseline costs for common upgrade categories (fixtures, materials, features) with predefined rates and line items.",
+          "validation": "Template pricing data retrieved showing standard rates for common upgrade categories.",
+          "missing": false
         },
         {
           "id": 2,
