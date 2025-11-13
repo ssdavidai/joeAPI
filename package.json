@@ -1,6 +1,6 @@
 {
   "name": "joeapi",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Construction Management REST API for chaconstruction-test database",
   "main": "src/server.js",
   "module": "./mcp/index.ts",

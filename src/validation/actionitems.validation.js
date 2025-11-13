@@ -11,7 +11,20 @@ const createActionItemSchema = {
     Status: validators.integer.required(),
     Source: validators.integer.required(),
     IsArchived: validators.boolean.default(false),
-    AcceptedBy: validators.integer.optional()
+    AcceptedBy: validators.integer.optional(),
+    // Nested objects for creating related data
+    CostChange: Joi.object({
+      Amount: Joi.number().required(),
+      EstimateCategoryId: validators.guid.required(),
+      RequiresClientApproval: validators.boolean.default(true)
+    }).optional(),
+    ScheduleChange: Joi.object({
+      NoOfDays: validators.integer.required(),
+      ConstructionTaskId: validators.guid.required(),
+      RequiresClientApproval: validators.boolean.default(true)
+    }).optional(),
+    SupervisorIds: Joi.array().items(validators.integer).optional(),
+    InitialComment: validators.string(5000).optional()
   })
 };
 

@@ -34,9 +34,49 @@ const getAllActionItems = async (req, res, next) => {
 
 const getActionItemById = async (req, res, next) => {
   try {
-    const result = await executeQuery(`SELECT * FROM dbo.[ActionItems] WHERE [Id] = @id AND [IsDeleted] = 0`, { id: req.params.id });
+    const { id } = req.params;
+
+    // Get base action item
+    const result = await executeQuery(`SELECT * FROM dbo.[ActionItems] WHERE [Id] = @id AND [IsDeleted] = 0`, { id });
     if (result.recordset.length === 0) return response.error(res, 'ActionItem not found', 404);
-    return response.success(res, result.recordset[0]);
+
+    const actionItem = result.recordset[0];
+
+    // Get cost change data if exists
+    const costChangeResult = await executeQuery(`
+      SELECT aicc.*, ec.Name as EstimateCategoryName
+      FROM dbo.[ActionItemCostChange] aicc
+      LEFT JOIN dbo.[EstimateCategories] ec ON aicc.EstimateCategoryId = ec.ID
+      WHERE aicc.ActionItemId = @id
+    `, { id });
+    actionItem.CostChange = costChangeResult.recordset.length > 0 ? costChangeResult.recordset[0] : null;
+
+    // Get schedule change data if exists
+    const scheduleChangeResult = await executeQuery(`
+      SELECT aisc.*, ct.Name as ConstructionTaskName
+      FROM dbo.[ActionItemScheduleChange] aisc
+      LEFT JOIN dbo.[ConstructionTasks] ct ON aisc.ConstructionTaskId = ct.ID
+      WHERE aisc.ActionItemId = @id
+    `, { id });
+    actionItem.ScheduleChange = scheduleChangeResult.recordset.length > 0 ? scheduleChangeResult.recordset[0] : null;
+
+    // Get comments
+    const commentsResult = await executeQuery(`
+      SELECT * FROM dbo.[ActionItemComments]
+      WHERE ActionItemId = @id
+      ORDER BY DateCreated ASC
+    `, { id });
+    actionItem.Comments = commentsResult.recordset;
+
+    // Get supervisors
+    const supervisorsResult = await executeQuery(`
+      SELECT * FROM dbo.[ActionItemsSupervisors]
+      WHERE ActionItemId = @id
+      ORDER BY DateCreated ASC
+    `, { id });
+    actionItem.Supervisors = supervisorsResult.recordset;
+
+    return response.success(res, actionItem);
   } catch (error) {
     next(error);
   }
@@ -46,7 +86,9 @@ const createActionItem = async (req, res, next) => {
   console.log('[CONTROLLER] createActionItem called - Method:', req.method, 'Body:', JSON.stringify(req.body));
   try {
     const audit = getAuditValues(req.user, 'create');
+    const { CostChange, ScheduleChange, SupervisorIds, InitialComment, ...actionItemData } = req.body;
 
+    // Create base ActionItem
     const result = await executeQuery(`
       INSERT INTO dbo.[ActionItems] (
         [Title], [Description], [ProjectId], [ActionTypeId], [DueDate], [Status], [Source], [IsArchived], [AcceptedBy],
@@ -58,15 +100,112 @@ const createActionItem = async (req, res, next) => {
         0, @DateCreated, @CreatedBy
       )
     `, {
-      ...req.body,
-      ProjectId: req.body.ProjectId || null,
-      IsArchived: req.body.IsArchived || false,
-      AcceptedBy: req.body.AcceptedBy || null,
+      ...actionItemData,
+      ProjectId: actionItemData.ProjectId || null,
+      IsArchived: actionItemData.IsArchived || false,
+      AcceptedBy: actionItemData.AcceptedBy || null,
       DateCreated: audit.DateCreated,
       CreatedBy: audit.CreatedBy
     });
 
-    return response.success(res, result.recordset[0], 'ActionItem created successfully', 201);
+    const createdActionItem = result.recordset[0];
+    const actionItemId = createdActionItem.Id;
+
+    // Create CostChange if provided (for ActionTypeId = 1)
+    if (CostChange && actionItemData.ActionTypeId === 1) {
+      await executeQuery(`
+        INSERT INTO dbo.[ActionItemCostChange] ([ActionItemId], [Amount], [EstimateCategoryId], [RequiresClientApproval])
+        VALUES (@ActionItemId, @Amount, @EstimateCategoryId, @RequiresClientApproval)
+      `, {
+        ActionItemId: actionItemId,
+        Amount: CostChange.Amount,
+        EstimateCategoryId: CostChange.EstimateCategoryId,
+        RequiresClientApproval: CostChange.RequiresClientApproval !== undefined ? CostChange.RequiresClientApproval : true
+      });
+    }
+
+    // Create ScheduleChange if provided (for ActionTypeId = 2)
+    if (ScheduleChange && actionItemData.ActionTypeId === 2) {
+      await executeQuery(`
+        INSERT INTO dbo.[ActionItemScheduleChange] ([ActionItemId], [NoOfDays], [ConstructionTaskId], [RequiresClientApproval])
+        VALUES (@ActionItemId, @NoOfDays, @ConstructionTaskId, @RequiresClientApproval)
+      `, {
+        ActionItemId: actionItemId,
+        NoOfDays: ScheduleChange.NoOfDays,
+        ConstructionTaskId: ScheduleChange.ConstructionTaskId,
+        RequiresClientApproval: ScheduleChange.RequiresClientApproval !== undefined ? ScheduleChange.RequiresClientApproval : true
+      });
+    }
+
+    // Create Supervisor assignments if provided
+    if (SupervisorIds && Array.isArray(SupervisorIds) && SupervisorIds.length > 0) {
+      for (const supervisorId of SupervisorIds) {
+        await executeQuery(`
+          INSERT INTO dbo.[ActionItemsSupervisors] ([Id], [ActionItemId], [SupervisorId], [CreatedBy], [DateCreated], [DateUpdated])
+          VALUES (NEWID(), @ActionItemId, @SupervisorId, @CreatedBy, @DateCreated, @DateUpdated)
+        `, {
+          ActionItemId: actionItemId,
+          SupervisorId: supervisorId,
+          CreatedBy: audit.CreatedBy,
+          DateCreated: audit.DateCreated,
+          DateUpdated: audit.DateCreated
+        });
+      }
+    }
+
+    // Create initial comment if provided
+    if (InitialComment) {
+      await executeQuery(`
+        INSERT INTO dbo.[ActionItemComments] ([ActionItemId], [Comment], [DateCreated], [CreatedBy], [DateUpdated])
+        VALUES (@ActionItemId, @Comment, @DateCreated, @CreatedBy, @DateUpdated)
+      `, {
+        ActionItemId: actionItemId,
+        Comment: InitialComment,
+        DateCreated: audit.DateCreated,
+        CreatedBy: audit.CreatedBy,
+        DateUpdated: audit.DateCreated
+      });
+    }
+
+    // Fetch the complete action item with all related data
+    const completeResult = await executeQuery(`SELECT * FROM dbo.[ActionItems] WHERE [Id] = @id`, { id: actionItemId });
+    const actionItem = completeResult.recordset[0];
+
+    // Get cost change data if exists
+    const costChangeResult = await executeQuery(`
+      SELECT aicc.*, ec.Name as EstimateCategoryName
+      FROM dbo.[ActionItemCostChange] aicc
+      LEFT JOIN dbo.[EstimateCategories] ec ON aicc.EstimateCategoryId = ec.ID
+      WHERE aicc.ActionItemId = @id
+    `, { id: actionItemId });
+    actionItem.CostChange = costChangeResult.recordset.length > 0 ? costChangeResult.recordset[0] : null;
+
+    // Get schedule change data if exists
+    const scheduleChangeResult = await executeQuery(`
+      SELECT aisc.*, ct.Name as ConstructionTaskName
+      FROM dbo.[ActionItemScheduleChange] aisc
+      LEFT JOIN dbo.[ConstructionTasks] ct ON aisc.ConstructionTaskId = ct.ID
+      WHERE aisc.ActionItemId = @id
+    `, { id: actionItemId });
+    actionItem.ScheduleChange = scheduleChangeResult.recordset.length > 0 ? scheduleChangeResult.recordset[0] : null;
+
+    // Get comments
+    const commentsResult = await executeQuery(`
+      SELECT * FROM dbo.[ActionItemComments]
+      WHERE ActionItemId = @id
+      ORDER BY DateCreated ASC
+    `, { id: actionItemId });
+    actionItem.Comments = commentsResult.recordset;
+
+    // Get supervisors
+    const supervisorsResult = await executeQuery(`
+      SELECT * FROM dbo.[ActionItemsSupervisors]
+      WHERE ActionItemId = @id
+      ORDER BY DateCreated ASC
+    `, { id: actionItemId });
+    actionItem.Supervisors = supervisorsResult.recordset;
+
+    return response.success(res, actionItem, 'ActionItem created successfully', 201);
   } catch (error) {
     next(error);
   }

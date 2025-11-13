@@ -32,12 +32,6 @@ type Config = z.infer<typeof configSchema>;
 async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestInit = {}) {
   const url = `${baseUrl}${endpoint}`;
 
-  console.error(`[HTTP] ${options.method || 'GET'} ${url}`);
-  if (options.body) {
-    const bodyStr = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
-    console.error(`[HTTP] Body:`, bodyStr.substring(0, 200));
-  }
-
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -46,19 +40,12 @@ async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestIni
     },
   });
 
-  console.error(`[HTTP] Response status:`, response.status);
-  console.error(`[HTTP] Response headers:`, JSON.stringify([...response.headers.entries()]));
-
   if (!response.ok) {
     const error = await response.text();
-    console.error(`[HTTP] Error response:`, error);
     throw new Error(`JoeAPI error (${response.status}): ${error}`);
   }
 
-  const jsonResponse: any = await response.json();
-  console.error(`[HTTP] Response JSON keys:`, Object.keys(jsonResponse));
-
-  return jsonResponse;
+  return await response.json();
 }
 
 // Define all MCP tools for JoeAPI
@@ -234,19 +221,234 @@ const tools: Tool[] = [
   },
   {
     name: 'create_action_item',
-    description: 'Create a new action item',
+    description: 'Create a new action item with optional nested data (cost change, schedule change, supervisors, initial comment)',
     inputSchema: {
       type: 'object',
       properties: {
         Title: { type: 'string', description: 'Action item title' },
         Description: { type: 'string', description: 'Detailed description' },
         ProjectId: { type: 'string', description: 'Related project ID (optional)' },
-        ActionTypeId: { type: 'number', description: 'Action type ID' },
+        ActionTypeId: { type: 'number', description: 'Action type ID (1=Cost Change, 2=Schedule Change, 5=Note, etc.)' },
         DueDate: { type: 'string', description: 'Due date (ISO 8601 format)' },
-        Status: { type: 'number', description: 'Status code' },
-        Source: { type: 'number', description: 'Source code' },
+        Status: { type: 'number', description: 'Status code (1=Open, 2=In Progress, etc.)' },
+        Source: { type: 'number', description: 'Source code (1=Manual)' },
+        CostChange: {
+          type: 'object',
+          description: 'Cost change data (only for ActionTypeId=1)',
+          properties: {
+            Amount: { type: 'number', description: 'Cost change amount' },
+            EstimateCategoryId: { type: 'string', description: 'Estimate category ID (GUID)' },
+            RequiresClientApproval: { type: 'boolean', description: 'Requires client approval (default: true)' },
+          },
+        },
+        ScheduleChange: {
+          type: 'object',
+          description: 'Schedule change data (only for ActionTypeId=2)',
+          properties: {
+            NoOfDays: { type: 'number', description: 'Number of days to adjust schedule' },
+            ConstructionTaskId: { type: 'string', description: 'Construction task ID (GUID)' },
+            RequiresClientApproval: { type: 'boolean', description: 'Requires client approval (default: true)' },
+          },
+        },
+        SupervisorIds: {
+          type: 'array',
+          description: 'Array of supervisor IDs to assign',
+          items: { type: 'number' },
+        },
+        InitialComment: { type: 'string', description: 'Initial comment for the action item' },
       },
       required: ['Title', 'Description', 'ActionTypeId', 'DueDate', 'Status', 'Source'],
+    },
+  },
+
+  // ===== ACTION ITEM COMMENTS =====
+  {
+    name: 'list_action_item_comments',
+    description: 'Get all comments for an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+  {
+    name: 'create_action_item_comment',
+    description: 'Add a comment to an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        Comment: { type: 'string', description: 'Comment text' },
+      },
+      required: ['actionItemId', 'Comment'],
+    },
+  },
+  {
+    name: 'update_action_item_comment',
+    description: 'Update an existing comment',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        commentId: { type: 'number', description: 'Comment ID' },
+        Comment: { type: 'string', description: 'Updated comment text' },
+      },
+      required: ['actionItemId', 'commentId', 'Comment'],
+    },
+  },
+  {
+    name: 'delete_action_item_comment',
+    description: 'Delete a comment from an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        commentId: { type: 'number', description: 'Comment ID' },
+      },
+      required: ['actionItemId', 'commentId'],
+    },
+  },
+
+  // ===== ACTION ITEM SUPERVISORS =====
+  {
+    name: 'list_action_item_supervisors',
+    description: 'Get all supervisors assigned to an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+  {
+    name: 'assign_action_item_supervisor',
+    description: 'Assign a supervisor to an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        SupervisorId: { type: 'number', description: 'Supervisor user ID' },
+      },
+      required: ['actionItemId', 'SupervisorId'],
+    },
+  },
+  {
+    name: 'remove_action_item_supervisor',
+    description: 'Remove a supervisor from an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        supervisorAssignmentId: { type: 'string', description: 'Supervisor assignment ID (GUID)' },
+      },
+      required: ['actionItemId', 'supervisorAssignmentId'],
+    },
+  },
+
+  // ===== ACTION ITEM COST CHANGE =====
+  {
+    name: 'get_action_item_cost_change',
+    description: 'Get cost change data for an action item (ActionTypeId=1 only)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+  {
+    name: 'create_action_item_cost_change',
+    description: 'Add cost change data to an action item (ActionTypeId=1 only)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        Amount: { type: 'number', description: 'Cost change amount' },
+        EstimateCategoryId: { type: 'string', description: 'Estimate category ID (GUID)' },
+        RequiresClientApproval: { type: 'boolean', description: 'Requires client approval' },
+      },
+      required: ['actionItemId', 'Amount', 'EstimateCategoryId'],
+    },
+  },
+  {
+    name: 'update_action_item_cost_change',
+    description: 'Update cost change data for an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        Amount: { type: 'number', description: 'Cost change amount' },
+        EstimateCategoryId: { type: 'string', description: 'Estimate category ID (GUID)' },
+        RequiresClientApproval: { type: 'boolean', description: 'Requires client approval' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+  {
+    name: 'delete_action_item_cost_change',
+    description: 'Delete cost change data from an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+
+  // ===== ACTION ITEM SCHEDULE CHANGE =====
+  {
+    name: 'get_action_item_schedule_change',
+    description: 'Get schedule change data for an action item (ActionTypeId=2 only)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+  {
+    name: 'create_action_item_schedule_change',
+    description: 'Add schedule change data to an action item (ActionTypeId=2 only)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        NoOfDays: { type: 'number', description: 'Number of days to adjust schedule' },
+        ConstructionTaskId: { type: 'string', description: 'Construction task ID (GUID)' },
+        RequiresClientApproval: { type: 'boolean', description: 'Requires client approval' },
+      },
+      required: ['actionItemId', 'NoOfDays', 'ConstructionTaskId'],
+    },
+  },
+  {
+    name: 'update_action_item_schedule_change',
+    description: 'Update schedule change data for an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+        NoOfDays: { type: 'number', description: 'Number of days to adjust schedule' },
+        ConstructionTaskId: { type: 'string', description: 'Construction task ID (GUID)' },
+        RequiresClientApproval: { type: 'boolean', description: 'Requires client approval' },
+      },
+      required: ['actionItemId'],
+    },
+  },
+  {
+    name: 'delete_action_item_schedule_change',
+    description: 'Delete schedule change data from an action item',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        actionItemId: { type: 'number', description: 'Action item ID' },
+      },
+      required: ['actionItemId'],
     },
   },
 
@@ -299,7 +501,7 @@ export default function createServer({ config }: { config: Config }) {
   const server = new Server(
     {
       name: 'joeapi-mcp',
-      version: '1.0.4',
+      version: '1.1.0',
     },
     {
       capabilities: {
@@ -446,29 +648,133 @@ export default function createServer({ config }: { config: Config }) {
         }
 
         case 'create_action_item': {
-          // Debug: Log the request
-          console.error('[DEBUG] Creating action item with args:', JSON.stringify(args));
-          console.error('[DEBUG] POST URL:', `${baseUrl}/api/v1/actionitems`);
-
-          const createResult: any = await callJoeAPI(baseUrl, '/api/v1/actionitems', {
+          result = await callJoeAPI(baseUrl, '/api/v1/actionitems', {
             method: 'POST',
             body: JSON.stringify(args),
           });
+          break;
+        }
 
-          console.error('[DEBUG] Response keys:', Object.keys(createResult));
-          console.error('[DEBUG] Response.success:', createResult.success);
-          console.error('[DEBUG] Response.message:', createResult.message);
-          console.error('[DEBUG] Response.data type:', Array.isArray(createResult.data) ? 'Array' : typeof createResult.data);
-          console.error('[DEBUG] Full response:', JSON.stringify(createResult).substring(0, 500));
+        // ===== ACTION ITEM COMMENTS =====
+        case 'list_action_item_comments': {
+          const { actionItemId } = args as { actionItemId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/comments`);
+          break;
+        }
 
-          // Validate we got a create response, not a list response
-          if (createResult.data && Array.isArray(createResult.data)) {
-            console.error('[ERROR] API returned an array with', createResult.data.length, 'items');
-            console.error('[ERROR] Expected single created item object');
-            throw new Error(`API returned list instead of created item. Received array with ${createResult.data.length} items. Check if validation failed or wrong endpoint called.`);
-          }
+        case 'create_action_item_comment': {
+          const { actionItemId, Comment } = args as { actionItemId: number; Comment: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/comments`, {
+            method: 'POST',
+            body: JSON.stringify({ Comment }),
+          });
+          break;
+        }
 
-          result = createResult;
+        case 'update_action_item_comment': {
+          const { actionItemId, commentId, Comment } = args as { actionItemId: number; commentId: number; Comment: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/comments/${commentId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ Comment }),
+          });
+          break;
+        }
+
+        case 'delete_action_item_comment': {
+          const { actionItemId, commentId } = args as { actionItemId: number; commentId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/comments/${commentId}`, {
+            method: 'DELETE',
+          });
+          break;
+        }
+
+        // ===== ACTION ITEM SUPERVISORS =====
+        case 'list_action_item_supervisors': {
+          const { actionItemId } = args as { actionItemId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/supervisors`);
+          break;
+        }
+
+        case 'assign_action_item_supervisor': {
+          const { actionItemId, SupervisorId } = args as { actionItemId: number; SupervisorId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/supervisors`, {
+            method: 'POST',
+            body: JSON.stringify({ SupervisorId }),
+          });
+          break;
+        }
+
+        case 'remove_action_item_supervisor': {
+          const { actionItemId, supervisorAssignmentId } = args as { actionItemId: number; supervisorAssignmentId: string };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/supervisors/${supervisorAssignmentId}`, {
+            method: 'DELETE',
+          });
+          break;
+        }
+
+        // ===== ACTION ITEM COST CHANGE =====
+        case 'get_action_item_cost_change': {
+          const { actionItemId } = args as { actionItemId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/costchange`);
+          break;
+        }
+
+        case 'create_action_item_cost_change': {
+          const { actionItemId, Amount, EstimateCategoryId, RequiresClientApproval } = args as any;
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/costchange`, {
+            method: 'POST',
+            body: JSON.stringify({ Amount, EstimateCategoryId, RequiresClientApproval }),
+          });
+          break;
+        }
+
+        case 'update_action_item_cost_change': {
+          const { actionItemId, ...updateData } = args as any;
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/costchange`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData),
+          });
+          break;
+        }
+
+        case 'delete_action_item_cost_change': {
+          const { actionItemId } = args as { actionItemId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/costchange`, {
+            method: 'DELETE',
+          });
+          break;
+        }
+
+        // ===== ACTION ITEM SCHEDULE CHANGE =====
+        case 'get_action_item_schedule_change': {
+          const { actionItemId } = args as { actionItemId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/schedulechange`);
+          break;
+        }
+
+        case 'create_action_item_schedule_change': {
+          const { actionItemId, NoOfDays, ConstructionTaskId, RequiresClientApproval } = args as any;
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/schedulechange`, {
+            method: 'POST',
+            body: JSON.stringify({ NoOfDays, ConstructionTaskId, RequiresClientApproval }),
+          });
+          break;
+        }
+
+        case 'update_action_item_schedule_change': {
+          const { actionItemId, ...updateData } = args as any;
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/schedulechange`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData),
+          });
+          break;
+        }
+
+        case 'delete_action_item_schedule_change': {
+          const { actionItemId } = args as { actionItemId: number };
+          result = await callJoeAPI(baseUrl, `/api/v1/actionitems/${actionItemId}/schedulechange`, {
+            method: 'DELETE',
+          });
           break;
         }
 
