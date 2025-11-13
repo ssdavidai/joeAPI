@@ -985,6 +985,30 @@ export default function createServer({ config }: { config: z.infer<typeof config
     {
       name: 'joeapi-mcp',
       version: '1.1.0',
+      description: `JoeAPI Construction Management MCP Server
+
+IMPORTANT WORKFLOW PROTOCOL:
+This server provides 49 MCP tools AND 18 pre-built workflow prompts for common construction management tasks.
+
+BEFORE using individual tools, ALWAYS:
+1. Check available workflow prompts using list_prompts
+2. If a relevant prompt exists, use get_prompt to retrieve it
+3. Execute the workflow steps provided by the prompt
+4. Only use individual tools if no prompt matches your task
+
+WORKFLOW PROMPT CATEGORIES:
+• Financial Reports: WIP reports, budget tracking, deposits, receivables, forecasts, income projections
+• Project Analytics: pipeline summary, estimate revisions, benchmarking, cost per sqft, change orders
+• Operational: schedule updates, overdue alerts, blind spots analysis, status reports, plan analysis
+
+WHY USE PROMPTS:
+Prompts provide step-by-step instructions that combine multiple tools in the correct sequence, include proper data analysis, and generate formatted reports automatically. They represent best practices for common workflows.
+
+EXAMPLE:
+Instead of: "let me call list_project_managements, then list_transactions, then..."
+Do this: "get_prompt with name='work_in_process_report'" and follow the instructions
+
+Available prompts: work_in_process_report, detailed_budget_tracking, deposit_tracking, cost_to_estimate_report, receivables_report, gross_receipts_forecast, projected_income, job_queue_summary, revised_estimate_analysis, job_benchmarking, cost_per_square_foot_report, change_order_tracking, upgrade_pricing, update_schedule, missed_action_items_alert, blind_spots_report, generate_job_status_report, plan_analysis`,
     },
     {
       capabilities: {
