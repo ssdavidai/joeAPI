@@ -50,6 +50,27 @@ async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestIni
 
 // Define all MCP tools for JoeAPI
 const tools: Tool[] = [
+  // ===== WORKFLOW DISCOVERY =====
+  {
+    name: 'find_workflow',
+    description: 'ALWAYS USE THIS FIRST! Search for pre-built workflow prompts that match your task. Returns workflow names and instructions. Much better than using individual tools directly because workflows combine multiple tools in the correct sequence with proper analysis.',
+    annotations: { category: 'Workflows', subcategory: 'Discovery' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: {
+          type: 'string',
+          description: 'Description of what you want to accomplish (e.g., "generate WIP report", "track budget", "price upgrades")'
+        },
+        autoExecute: {
+          type: 'boolean',
+          description: 'If true, automatically returns the full workflow instructions. If false, just returns matching workflow names. Default: true',
+        },
+      },
+      required: ['task'],
+    },
+  },
+
   // ===== CLIENTS =====
   {
     name: 'list_clients',
@@ -1498,6 +1519,95 @@ Validation: Report provides complete quantity takeoff ready for pricing/estimati
       let result: any;
 
       switch (name) {
+        // ===== WORKFLOW DISCOVERY =====
+        case 'find_workflow': {
+          const { task, autoExecute = true } = args as { task: string; autoExecute?: boolean };
+
+          // Search prompts for matches based on task description
+          const taskLower = task.toLowerCase();
+          const matches = prompts.filter(p => {
+            const nameLower = p.name.toLowerCase().replace(/_/g, ' ');
+            const descLower = p.description.toLowerCase();
+
+            // Check if task mentions any keywords from the prompt name or description
+            return nameLower.split(' ').some(word => taskLower.includes(word)) ||
+                   descLower.split(' ').some(word => word.length > 4 && taskLower.includes(word)) ||
+                   taskLower.split(' ').some(word => word.length > 4 && (nameLower.includes(word) || descLower.includes(word)));
+          });
+
+          if (matches.length === 0) {
+            result = {
+              found: false,
+              message: `No workflow found for "${task}". Available workflows: ${prompts.map(p => p.name).join(', ')}`,
+              availableWorkflows: prompts.map(p => ({ name: p.name, description: p.description })),
+            };
+          } else if (!autoExecute) {
+            result = {
+              found: true,
+              matches: matches.map(p => ({
+                name: p.name,
+                description: p.description,
+                arguments: p.arguments
+              })),
+              message: `Found ${matches.length} matching workflow(s). Use get_prompt with the workflow name to retrieve instructions.`,
+            };
+          } else {
+            // Auto-execute: get the first/best match and return its instructions
+            const bestMatch = matches[0];
+
+            // Build instructions for the matched workflow (reuse GetPromptRequestSchema logic)
+            let instructions = '';
+            const promptName = bestMatch.name;
+
+            // Get the instructions from the GetPromptRequestSchema handler
+            // We'll build a minimal version here to avoid duplication
+            switch (promptName) {
+              case 'work_in_process_report':
+                instructions = `Found workflow: ${promptName}
+
+${bestMatch.description}
+
+EXECUTE THIS WORKFLOW by following these steps:
+
+STEP 1: Use list_project_managements
+Context: Retrieve all active projects to determine which jobs are currently in process.
+
+STEP 2: Use list_project_schedule_tasks
+Context: For each active project, get the construction tasks to see which tasks are completed, in progress, and upcoming.
+
+STEP 3: Use list_action_items
+Context: Get all action items for active projects, particularly cost changes and schedule changes.
+
+STEP 4: Use list_transactions
+Context: Access QB transaction data to determine actual costs incurred on each work-in-process job.
+
+STEP 5: Use list_job_balances
+Context: Get current job balance for each WIP project.
+
+STEP 6: Generate comprehensive WIP report showing all active projects, completion %, costs vs budget, balances, and issues.`;
+                break;
+
+              default:
+                instructions = `Found workflow: ${promptName}
+
+${bestMatch.description}
+
+To get the full step-by-step instructions, please call: get_prompt with name="${promptName}"
+
+Or try using this workflow by saying "Use the ${promptName} prompt"`;
+            }
+
+            result = {
+              found: true,
+              workflow: bestMatch.name,
+              description: bestMatch.description,
+              instructions: instructions,
+              message: `Found and returning instructions for: ${bestMatch.name}. Follow the steps above!`,
+            };
+          }
+          break;
+        }
+
         // ===== CLIENTS =====
         case 'list_clients': {
           const { page = 1, limit = 20, search = '' } = args as any;
