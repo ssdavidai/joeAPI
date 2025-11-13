@@ -1,7 +1,11 @@
 # Smithery MCP Server Configuration
 # Documentation: https://smithery.ai/docs/build/project-config/smithery-yaml
 
+name: "JoeAPI Construction Management"
 runtime: "typescript"
+
+# Export configuration schema for Smithery
+configSchema: true
 
 # Default environment variables
 # Users can override these when they install the server

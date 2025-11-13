@@ -6,7 +6,7 @@
  * - Clients, Contacts, SubContractors
  * - Proposals, ProposalLines, Estimates
  * - ProjectManagements, ProjectSchedules, ProjectScheduleTasks
- * - ActionItems
+ * - ActionItems with nested resources (Comments, Supervisors, Cost/Schedule Changes)
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -54,6 +54,7 @@ const tools: Tool[] = [
   {
     name: 'list_clients',
     description: 'Get paginated list of clients (multi-tenant, filtered by user)',
+    annotations: { category: 'Clients', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -66,6 +67,7 @@ const tools: Tool[] = [
   {
     name: 'get_client',
     description: 'Get a specific client by ID',
+    annotations: { category: 'Clients', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -77,6 +79,7 @@ const tools: Tool[] = [
   {
     name: 'create_client',
     description: 'Create a new client',
+    annotations: { category: 'Clients', subcategory: 'Mutation' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -96,28 +99,30 @@ const tools: Tool[] = [
   {
     name: 'list_contacts',
     description: 'Get paginated list of contacts',
+    annotations: { category: 'Contacts', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
-        search: { type: 'string' },
-        includeInactive: { type: 'boolean' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        search: { type: 'string', description: 'Search term' },
+        includeInactive: { type: 'boolean', description: 'Include inactive contacts' },
       },
     },
   },
   {
     name: 'create_contact',
     description: 'Create a new contact',
+    annotations: { category: 'Contacts', subcategory: 'Mutation' },
     inputSchema: {
       type: 'object',
       properties: {
-        Name: { type: 'string' },
-        Email: { type: 'string' },
-        Phone: { type: 'string' },
-        Address: { type: 'string' },
-        City: { type: 'string' },
-        State: { type: 'string' },
+        Name: { type: 'string', description: 'Contact name' },
+        Email: { type: 'string', description: 'Email address' },
+        Phone: { type: 'string', description: 'Phone number' },
+        Address: { type: 'string', description: 'Street address' },
+        City: { type: 'string', description: 'City' },
+        State: { type: 'string', description: 'State' },
       },
       required: ['Name'],
     },
@@ -127,14 +132,15 @@ const tools: Tool[] = [
   {
     name: 'list_subcontractors',
     description: 'Get paginated list of subcontractors',
+    annotations: { category: 'Subcontractors', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
-        search: { type: 'string' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        search: { type: 'string', description: 'Search term' },
         category: { type: 'string', description: 'Filter by category (e.g., Plumbing, Electrical)' },
-        includeInactive: { type: 'boolean' },
+        includeInactive: { type: 'boolean', description: 'Include inactive subcontractors' },
       },
     },
   },
@@ -143,20 +149,22 @@ const tools: Tool[] = [
   {
     name: 'list_proposals',
     description: 'Get paginated list of proposals',
+    annotations: { category: 'Proposals', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
-        clientId: { type: 'string', description: 'Filter by client ID' },
-        includeDeleted: { type: 'boolean' },
-        includeArchived: { type: 'boolean' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        clientId: { type: 'string', description: 'Filter by client ID (GUID)' },
+        includeDeleted: { type: 'boolean', description: 'Include soft-deleted proposals' },
+        includeArchived: { type: 'boolean', description: 'Include archived proposals' },
       },
     },
   },
   {
     name: 'get_proposal',
     description: 'Get a specific proposal by ID',
+    annotations: { category: 'Proposals', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -170,12 +178,13 @@ const tools: Tool[] = [
   {
     name: 'list_proposal_lines',
     description: 'Get proposal line items',
+    annotations: { category: 'Proposals', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
-        proposalId: { type: 'string', description: 'Filter by proposal ID' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        proposalId: { type: 'string', description: 'Filter by proposal ID (GUID)' },
       },
     },
   },
@@ -184,11 +193,12 @@ const tools: Tool[] = [
   {
     name: 'list_estimates',
     description: 'Get paginated list of estimates',
+    annotations: { category: 'Estimates', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
       },
     },
   },
@@ -197,20 +207,22 @@ const tools: Tool[] = [
   {
     name: 'list_action_items',
     description: 'Get paginated list of action items',
+    annotations: { category: 'ActionItems', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
-        projectId: { type: 'string', description: 'Filter by project ID' },
-        includeDeleted: { type: 'boolean' },
-        includeArchived: { type: 'boolean' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        projectId: { type: 'string', description: 'Filter by project ID (GUID)' },
+        includeDeleted: { type: 'boolean', description: 'Include soft-deleted items' },
+        includeArchived: { type: 'boolean', description: 'Include archived items' },
       },
     },
   },
   {
     name: 'get_action_item',
-    description: 'Get a specific action item by ID',
+    description: 'Get a specific action item by ID with all nested data (comments, supervisors, cost/schedule changes)',
+    annotations: { category: 'ActionItems', subcategory: 'Query' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -222,12 +234,13 @@ const tools: Tool[] = [
   {
     name: 'create_action_item',
     description: 'Create a new action item with optional nested data (cost change, schedule change, supervisors, initial comment)',
+    annotations: { category: 'ActionItems', subcategory: 'Mutation' },
     inputSchema: {
       type: 'object',
       properties: {
         Title: { type: 'string', description: 'Action item title' },
         Description: { type: 'string', description: 'Detailed description' },
-        ProjectId: { type: 'string', description: 'Related project ID (optional)' },
+        ProjectId: { type: 'string', description: 'Related project ID (optional, GUID)' },
         ActionTypeId: { type: 'number', description: 'Action type ID (1=Cost Change, 2=Schedule Change, 5=Note, etc.)' },
         DueDate: { type: 'string', description: 'Due date (ISO 8601 format)' },
         Status: { type: 'number', description: 'Status code (1=Open, 2=In Progress, etc.)' },
@@ -253,7 +266,7 @@ const tools: Tool[] = [
         SupervisorIds: {
           type: 'array',
           description: 'Array of supervisor IDs to assign',
-          items: { type: 'number' },
+          items: { type: 'number', description: 'User ID' },
         },
         InitialComment: { type: 'string', description: 'Initial comment for the action item' },
       },
@@ -265,6 +278,7 @@ const tools: Tool[] = [
   {
     name: 'list_action_item_comments',
     description: 'Get all comments for an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Comments' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -276,6 +290,7 @@ const tools: Tool[] = [
   {
     name: 'create_action_item_comment',
     description: 'Add a comment to an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Comments' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -288,6 +303,7 @@ const tools: Tool[] = [
   {
     name: 'update_action_item_comment',
     description: 'Update an existing comment',
+    annotations: { category: 'ActionItems', subcategory: 'Comments' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -301,6 +317,7 @@ const tools: Tool[] = [
   {
     name: 'delete_action_item_comment',
     description: 'Delete a comment from an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Comments' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -315,6 +332,7 @@ const tools: Tool[] = [
   {
     name: 'list_action_item_supervisors',
     description: 'Get all supervisors assigned to an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Supervisors' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -326,6 +344,7 @@ const tools: Tool[] = [
   {
     name: 'assign_action_item_supervisor',
     description: 'Assign a supervisor to an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Supervisors' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -338,6 +357,7 @@ const tools: Tool[] = [
   {
     name: 'remove_action_item_supervisor',
     description: 'Remove a supervisor from an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Supervisors' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -352,6 +372,7 @@ const tools: Tool[] = [
   {
     name: 'get_action_item_cost_change',
     description: 'Get cost change data for an action item (ActionTypeId=1 only)',
+    annotations: { category: 'ActionItems', subcategory: 'Cost Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -363,6 +384,7 @@ const tools: Tool[] = [
   {
     name: 'create_action_item_cost_change',
     description: 'Add cost change data to an action item (ActionTypeId=1 only)',
+    annotations: { category: 'ActionItems', subcategory: 'Cost Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -377,6 +399,7 @@ const tools: Tool[] = [
   {
     name: 'update_action_item_cost_change',
     description: 'Update cost change data for an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Cost Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -391,6 +414,7 @@ const tools: Tool[] = [
   {
     name: 'delete_action_item_cost_change',
     description: 'Delete cost change data from an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Cost Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -404,6 +428,7 @@ const tools: Tool[] = [
   {
     name: 'get_action_item_schedule_change',
     description: 'Get schedule change data for an action item (ActionTypeId=2 only)',
+    annotations: { category: 'ActionItems', subcategory: 'Schedule Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -415,6 +440,7 @@ const tools: Tool[] = [
   {
     name: 'create_action_item_schedule_change',
     description: 'Add schedule change data to an action item (ActionTypeId=2 only)',
+    annotations: { category: 'ActionItems', subcategory: 'Schedule Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -429,6 +455,7 @@ const tools: Tool[] = [
   {
     name: 'update_action_item_schedule_change',
     description: 'Update schedule change data for an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Schedule Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -443,6 +470,7 @@ const tools: Tool[] = [
   {
     name: 'delete_action_item_schedule_change',
     description: 'Delete schedule change data from an action item',
+    annotations: { category: 'ActionItems', subcategory: 'Schedule Changes' },
     inputSchema: {
       type: 'object',
       properties: {
@@ -456,11 +484,12 @@ const tools: Tool[] = [
   {
     name: 'list_project_schedules',
     description: 'Get paginated list of project schedules',
+    annotations: { category: 'Projects', subcategory: 'Schedules' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
       },
     },
   },
@@ -469,12 +498,13 @@ const tools: Tool[] = [
   {
     name: 'list_project_schedule_tasks',
     description: 'Get project schedule tasks',
+    annotations: { category: 'Projects', subcategory: 'Tasks' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
-        scheduleId: { type: 'string', description: 'Filter by schedule ID' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
+        scheduleId: { type: 'string', description: 'Filter by schedule ID (GUID)' },
       },
     },
   },
@@ -483,11 +513,12 @@ const tools: Tool[] = [
   {
     name: 'list_project_managements',
     description: 'Get paginated list of project managements',
+    annotations: { category: 'Projects', subcategory: 'Management' },
     inputSchema: {
       type: 'object',
       properties: {
-        page: { type: 'number' },
-        limit: { type: 'number' },
+        page: { type: 'number', description: 'Page number (default: 1)' },
+        limit: { type: 'number', description: 'Items per page (default: 20, max: 100)' },
       },
     },
   },
