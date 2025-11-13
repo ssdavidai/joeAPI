@@ -31,6 +31,13 @@ type Config = z.infer<typeof configSchema>;
 // Helper function to call JoeAPI
 async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestInit = {}) {
   const url = `${baseUrl}${endpoint}`;
+
+  console.error(`[HTTP] ${options.method || 'GET'} ${url}`);
+  if (options.body) {
+    const bodyStr = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+    console.error(`[HTTP] Body:`, bodyStr.substring(0, 200));
+  }
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -39,12 +46,19 @@ async function callJoeAPI(baseUrl: string, endpoint: string, options: RequestIni
     },
   });
 
+  console.error(`[HTTP] Response status:`, response.status);
+  console.error(`[HTTP] Response headers:`, JSON.stringify([...response.headers.entries()]));
+
   if (!response.ok) {
     const error = await response.text();
+    console.error(`[HTTP] Error response:`, error);
     throw new Error(`JoeAPI error (${response.status}): ${error}`);
   }
 
-  return response.json();
+  const jsonResponse: any = await response.json();
+  console.error(`[HTTP] Response JSON keys:`, Object.keys(jsonResponse));
+
+  return jsonResponse;
 }
 
 // Define all MCP tools for JoeAPI
@@ -285,7 +299,7 @@ export default function createServer({ config }: { config: Config }) {
   const server = new Server(
     {
       name: 'joeapi-mcp',
-      version: '1.0.3',
+      version: '1.0.4',
     },
     {
       capabilities: {
