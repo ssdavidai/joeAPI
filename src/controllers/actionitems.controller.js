@@ -3,6 +3,7 @@ const response = require('../utils/response');
 const { getAuditValues, getSoftDeleteValues } = require('../middleware/audit');
 
 const getAllActionItems = async (req, res, next) => {
+  console.log('[CONTROLLER] getAllActionItems called - Method:', req.method, 'Path:', req.path);
   try {
     const { page = 1, limit = 20, projectId = '', includeDeleted = false, includeArchived = false } = req.query;
     const offset = (page - 1) * limit;
@@ -42,6 +43,7 @@ const getActionItemById = async (req, res, next) => {
 };
 
 const createActionItem = async (req, res, next) => {
+  console.log('[CONTROLLER] createActionItem called - Method:', req.method, 'Body:', JSON.stringify(req.body));
   try {
     const audit = getAuditValues(req.user, 'create');
 
