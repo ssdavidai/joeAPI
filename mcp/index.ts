@@ -1045,265 +1045,432 @@ Available prompts: work_in_process_report, detailed_budget_tracking, deposit_tra
       case 'work_in_process_report':
         instructions = `To generate a Work-in-Process (WIP) Report, follow these steps:
 
-1. Use list_project_managements to retrieve all active projects
-2. For each active project, use list_project_schedule_tasks to get task completion status
-3. Use list_action_items to get recent cost changes and schedule changes
-4. Use list_transactions filtered by project to get actual costs incurred
-5. Use list_job_balances to get current financial position for each project
-6. Analyze and format the data into a comprehensive WIP report showing:
-   - All active projects with completion percentages
-   - Costs incurred vs. budget
-   - Current job balances
-   - Outstanding action items and issues
-   - Estimated completion dates`;
+STEP 1: Use list_project_managements
+Context: Retrieve all active projects to determine which jobs are currently in process.
+Validation: Active projects list showing current status of each job.
+
+STEP 2: Use list_project_schedule_tasks
+Context: For each active project, get the construction tasks to see which tasks are completed, in progress, and upcoming.
+Validation: Task lists show completion status and provide insight into work progress.
+
+STEP 3: Use list_action_items
+Context: Get all action items for active projects, particularly cost changes and schedule changes that indicate work adjustments.
+Validation: Action items show recent changes, issues, and adjustments to the work in process.
+
+STEP 4: Use list_transactions
+Context: Access QB transaction data to determine actual costs incurred on each work-in-process job, filtered by project ClassID to get spending to date.
+Validation: Transaction data shows actual costs spent on each WIP project by category (labor, materials, subcontractors).
+
+STEP 5: Use list_job_balances
+Context: Get current job balance for each WIP project showing the financial position (balance owed or credit available).
+Validation: Job balances provide current financial status for each work-in-process project.
+
+STEP 6: Generate comprehensive WIP report
+Context: Using Claude's analysis capabilities, generate comprehensive WIP report showing: (1) All active projects, (2) Completion percentage, (3) Costs incurred vs. budget, (4) Current balances, (5) Estimated completion date, (6) Outstanding issues/action items.
+Validation: WIP report provides complete status of all ongoing work with financial and timeline metrics.`;
         break;
 
       case 'detailed_budget_tracking':
-        instructions = `To track budget variance for a job:
+        instructions = `To report how far a job is over/under budget, follow these steps:
 
-1. Use list_estimates with projectId to get the original budget
-2. Use list_cost_revisions with projectId to get all budget adjustments
-3. Use list_transactions filtered by projectId to get actual costs spent
-4. Use get_cost_variance with projectId to calculate variance analysis
-5. Format the report showing:
-   - Original estimate by category
-   - All revisions with dates and reasons
-   - Actual costs to date
-   - Variance in dollars and percentage (over/under budget)`;
+STEP 1: Use list_estimates
+Context: Get the original estimate/budget for the specific job${args?.projectId ? ` (projectId: ${args.projectId})` : ''}.
+Validation: Original budget retrieved with breakdown by category.
+
+STEP 2: Use list_cost_revisions
+Context: Retrieve all cost revisions for the job to get complete history of budget adjustments.
+Validation: All budget adjustments retrieved with dates, amounts, and categories.
+
+STEP 3: Use list_transactions
+Context: Get QB transaction data filtered by project ClassID to retrieve actual costs spent on the job to date, broken down by account/category.
+Validation: Actual costs show all expenditures by category (labor, materials, subcontractors, etc.).
+
+STEP 4: Use get_cost_variance
+Context: Calculate budget variance showing: (1) Original estimate, (2) Revised estimate with all changes, (3) Actual costs to date, (4) Variance amount and percentage over/under budget.
+Validation: Report shows job is $X over budget (Y% over revised budget) with detailed variance by category.`;
         break;
 
       case 'deposit_tracking':
-        instructions = `To track deposits and balances:
+        instructions = `To track owner deposits and current balance on job accounts, follow these steps:
 
-1. Use list_deposits ${args?.projectId ? `filtered by projectId` : 'to get all projects'}
-2. ${args?.projectId ? `Use get_deposit_by_project with projectId for detailed info` : 'For each project, use get_deposit_by_project for details'}
-3. Use list_transactions filtered by deposit accounts to see payment history
-4. Use list_project_managements to link deposits to project/client info
-5. Generate report showing:
-   - Initial deposit amount
-   - All draws/payments made with dates
-   - Remaining balance
-   - Percentage of deposit used`;
+STEP 1: Use list_deposits
+Context: Access deposit/retainer tracking to get initial owner deposits for each job/project${args?.projectId ? ` (filter by projectId: ${args.projectId})` : ''}, including deposit amounts and usage to date.
+Validation: Deposit records show initial deposit amounts, amounts used, and current balances for all projects.
+
+STEP 2: Use get_deposit_by_project
+Context: ${args?.projectId ? `Get detailed deposit information for projectId: ${args.projectId}` : 'For each project, get detailed deposit information'}, showing initial deposit, all draws/payments made against it, and remaining balance.
+Validation: Detailed deposit data shows complete payment history and current balance for the project.
+
+STEP 3: Use list_transactions
+Context: Retrieve QB transactions filtered by deposit/retainer accounts to see detailed payment history and draws made against deposits.
+Validation: Transaction history shows all amounts withdrawn from deposit accounts with dates and descriptions.
+
+STEP 4: Use list_project_managements
+Context: Get project information to associate deposits with specific jobs and clients for comprehensive reporting.
+Validation: Project data provides context linking deposits to job details and client information.
+
+STEP 5: Generate deposit report
+Context: Using Claude's analysis capabilities, generate formatted report showing: initial deposit, payments to date, current balance, and percentage of deposit used for each job.
+Validation: Report clearly shows deposit status for each job account with usage percentages.`;
         break;
 
       case 'cost_to_estimate_report':
-        instructions = `To generate cost vs. estimate tracking:
+        instructions = `To provide real-time cost vs. estimate tracking report, follow these steps:
 
-1. Use list_estimates to get original budgets
-2. Use list_cost_revisions to get complete revision history
-3. Use list_transactions to get actual costs by project and category
-4. Use get_cost_variance to calculate variance analysis
-5. Format report showing for each project:
-   - Original estimate
-   - Revised estimate (with all changes)
-   - Actual costs to date
-   - Variance in dollars and percentage by category`;
+STEP 1: Use list_estimates
+Context: Retrieve all estimates to get the original budgeted costs for each project.
+Validation: Estimates show original budget breakdown by category/trade.
+
+STEP 2: Use list_cost_revisions
+Context: Get all cost revisions for each project showing the complete history of budget changes and estimate adjustments.
+Validation: Cost revision history shows all budget modifications with dates, amounts, and reasons.
+
+STEP 3: Use list_transactions
+Context: Retrieve QB transaction data filtered by project to get actual costs incurred to date, broken down by account/category (labor, materials, subcontractors).
+Validation: Transaction data shows actual costs spent on each project by category.
+
+STEP 4: Use get_cost_variance
+Context: Calculate cost variance analysis comparing original estimate, revised estimate (with approved changes), and actual costs to date. Shows variance in dollars and percentage over/under budget.
+Validation: Variance report shows for each category: estimated, actual, variance in dollars and percentage.
+
+STEP 5: Generate real-time cost dashboard
+Context: Using Claude's analysis capabilities, generate real-time dashboard showing cost vs. estimate status for all active projects, highlighting categories that are over/under budget.
+Validation: Dashboard provides immediate visibility into cost performance across all projects with indicators for budget status.`;
         break;
 
       case 'receivables_report':
-        instructions = `To generate receivables report:
+        instructions = `To generate balances on supervision collected and supervision receivables, follow these steps:
 
-1. Use list_invoices to get all invoices (paid and outstanding)
-2. Use list_transactions filtered by supervision accounts for payment history
-3. Use list_clients to associate receivables with clients
-4. Use list_job_balances to get per-project financial status
-5. Calculate and format report showing:
-   - Total supervision fees collected
-   - Total outstanding receivables
-   - Breakdown by client with aging (days outstanding)`;
+STEP 1: Use list_invoices
+Context: Get all invoices from the system to identify outstanding supervision fee invoices and paid invoices for receivables analysis.
+Validation: Invoice data shows amounts, dates, payment status, and aging information for all supervision fees.
+
+STEP 2: Use list_transactions
+Context: Retrieve QB transactions filtered by supervision-related accounts to get payment collection history and calculate total collected to date.
+Validation: Transaction records show all supervision fee payments that have been successfully collected.
+
+STEP 3: Use list_clients
+Context: Get client information to associate receivables with specific clients and their supervision fee arrangements.
+Validation: Client data helps identify who owes supervision fees and their payment history.
+
+STEP 4: Use list_job_balances
+Context: Get current job balances to understand the financial position of each project, including amounts owed or credit available.
+Validation: Job balances provide per-project financial status relevant to receivables analysis.
+
+STEP 5: Generate receivables report
+Context: Using Claude's analysis capabilities, generate formatted receivables report showing supervision collected balance, supervision receivables balance, and breakdown by client with aging.
+Validation: Report clearly shows total collected, total receivable, and detail by client with days outstanding.`;
         break;
 
       case 'gross_receipts_forecast':
-        instructions = `To forecast gross receipts:
+        instructions = `To project gross receipts for the coming month, follow these steps:
 
-1. Use list_project_managements to get active projects and completion status
-2. Use list_proposals to get recently accepted proposals (new deposits)
-3. Use list_invoices to identify upcoming payments due
-4. Use list_deposits to include expected deposit draws
-5. Calculate forecast by summing:
-   - Scheduled milestone payments from invoices
-   - New proposal deposits
-   - Expected deposit draws
-   - Apply historical collection rate adjustments
-6. Format with breakdown by source and confidence levels`;
+STEP 1: Use list_project_managements
+Context: Get all active projects to calculate expected payments based on project completion and payment schedules.
+Validation: Projects returned with completion status and payment milestone information.
+
+STEP 2: Use list_proposals
+Context: Retrieve recently accepted proposals that will generate initial deposits or payments in the coming month.
+Validation: Newly accepted proposals that haven't started yet, representing new deposit income.
+
+STEP 3: Use list_invoices
+Context: Get all invoices to identify payments due in the next month from all active projects, including amounts, dates, and client information.
+Validation: Invoice list shows upcoming payments with due dates within the forecast period.
+
+STEP 4: Use list_deposits
+Context: Check deposit/retainer balances to include expected deposit draws and remaining retainer funds available for billing.
+Validation: Deposit data shows available retainer funds and deposit usage patterns for revenue forecasting.
+
+STEP 5: Calculate gross receipts forecast
+Context: Using Claude's calculation capabilities, calculate total gross receipts forecast by summing: (1) Scheduled milestone payments from invoices, (2) New proposal deposits, (3) Expected deposit draws, (4) Historical collection rate adjustments.
+Validation: Total gross receipts projection with breakdown by source and confidence intervals based on historical collection rates.`;
         break;
 
       case 'job_queue_summary':
-        instructions = `To summarize job queue and pipeline:
+        instructions = `To report on number of homes in queue, under construction, and upcoming pipeline, follow these steps:
 
-1. Use get_proposal_pipeline to get comprehensive pipeline analytics
-2. Use list_project_managements to count active projects
-3. Use list_project_schedules to determine current vs. upcoming work
-4. Categorize and format showing:
-   - Queue: proposals pending acceptance (counts & total values)
-   - Under Construction: active projects in progress
-   - Upcoming: accepted proposals not yet started
-   - Include expected start/completion dates`;
+STEP 1: Use get_proposal_pipeline
+Context: Get comprehensive pipeline analytics showing all proposals categorized by stage (pending, accepted, in progress, completed) with counts, total values, and timeline information.
+Validation: Pipeline data provides complete breakdown of proposals by stage with financial metrics and timing.
+
+STEP 2: Use list_project_managements
+Context: Retrieve all active projects to count homes currently under construction and verify current work status.
+Validation: Project list shows active construction projects with their current status for verification.
+
+STEP 3: Use list_project_schedules
+Context: Get project schedules to determine which projects are actively being worked on versus scheduled to start soon.
+Validation: Schedules show current vs. upcoming projects based on start dates.
+
+STEP 4: Generate queue summary report
+Context: Using Claude's analysis capabilities, create a formatted summary report visualizing the pipeline with counts, total values, and expected timeline for each category: (1) Queue - proposals pending acceptance, (2) Under Construction - active projects in progress, (3) Upcoming - accepted proposals not yet started.
+Validation: Report shows clear metrics: number of homes in each stage, total contract values, expected start/completion dates.`;
         break;
 
       case 'projected_income':
-        instructions = `To project monthly income:
+        instructions = `To estimate expected monthly income, follow these steps:
 
-1. Use list_proposals to get active proposals with amounts
-2. Use list_proposal_lines to understand payment schedules
-3. Use list_project_managements to get completion % and remaining payments
-4. Calculate projections considering:
-   - Expected proposal acceptances (with historical rate)
-   - Scheduled milestone payments from active projects
-   - Completion-based payments
-5. Format with breakdown by source and confidence levels`;
+STEP 1: Use list_proposals
+Context: Retrieve all active proposals to calculate potential income from proposals that are likely to be accepted this month.
+Validation: Proposals are returned with their total amounts and current status (pending, accepted, etc.).
+
+STEP 2: Use list_proposal_lines
+Context: For each proposal, get the detailed line items to understand the breakdown of income sources and payment schedules.
+Validation: Proposal line items show detailed pricing and can be used to calculate payment milestones.
+
+STEP 3: Use list_project_managements
+Context: Get all active projects to determine ongoing income from projects in progress, including percentage complete and remaining payments.
+Validation: Project data includes completion percentages and payment schedules.
+
+STEP 4: Calculate projected income
+Context: Using Claude's calculation capabilities, calculate projected monthly income based on: (1) Expected proposal acceptances with historical acceptance rate, (2) Scheduled milestone payments from active projects, (3) Completion-based payments calculated from project progress.
+Validation: Income projection shows breakdown by source (new proposals, active projects) with confidence levels and expected payment dates.`;
         break;
 
       case 'revised_estimate_analysis':
-        instructions = `To analyze estimate revisions:
+        instructions = `To show history of revised estimates per job and calculate average overage, follow these steps:
 
-1. Use list_estimates to get original budgets
-2. Use get_estimate_revision_history ${args?.projectId ? 'for the specific project' : 'for all projects'}
-3. Use list_cost_revisions for detailed revision data
-4. Analyze to calculate:
-   - Total revised amount per job
-   - Overage (revised - original) per job
-   - Average overage across all jobs
-   - Common revision categories
-5. Format with trends and patterns`;
+STEP 1: Use list_estimates
+Context: Get all estimates to identify the original budget for each job.
+Validation: Estimates list shows original budget amounts by job/project.
+
+STEP 2: Use get_estimate_revision_history
+Context: Retrieve complete revision history for each estimate${args?.projectId ? ` (projectId: ${args.projectId})` : ''} showing all changes from original to current, with dates, amounts, and reasons for each revision.
+Validation: Estimate revision history provides complete audit trail of all budget changes per job.
+
+STEP 3: Use list_cost_revisions
+Context: Get detailed cost revision data for all projects to analyze revision patterns, amounts, and categories affected.
+Validation: Cost revision data shows amounts, categories, dates, and cumulative impact for each job.
+
+STEP 4: Analyze revision history
+Context: Using Claude's analysis capabilities, analyze the cost change history to: (1) Group revisions by job, (2) Calculate total revised amount per job, (3) Calculate overage (revised estimate - original estimate), (4) Calculate average overage across all jobs.
+Validation: Analysis shows per-job revision history, total overage per job, and company-wide average overage percentage.
+
+STEP 5: Generate trend analysis
+Context: Using Claude's pattern recognition, generate trend report showing revision patterns: which estimate categories most frequently require revisions, average time to revision, correlation with job type/size.
+Validation: Report identifies patterns in estimate revisions to help improve future estimating accuracy.`;
         break;
 
       case 'job_benchmarking':
-        instructions = `To benchmark job costs and durations:
+        instructions = `To analyze average cost and duration of specific job types from historical jobs, follow these steps:
 
-1. Use list_project_managements to get completed projects
-2. Use list_transactions for historical costs by category/trade
-3. Use list_schedule_revisions for actual duration data
-4. Filter to specific job type if provided: ${args?.jobType || 'all types'}
-5. Calculate and format benchmarks:
-   - Average cost by task type
-   - Average duration by task type
-   - Cost/duration by project size
-   - Standard deviations and ranges`;
+STEP 1: Use list_project_managements
+Context: Retrieve all completed projects to build historical database for benchmarking.
+Validation: Historical project data includes completion dates and project types.
+
+STEP 2: Use list_transactions
+Context: Access QB transaction history for completed projects broken down by account/category to get actual costs by trade/task type (flooring, framing, insulation, etc.)${args?.jobType ? ` focusing on ${args.jobType}` : ''}.
+Validation: Transaction history shows actual costs by category across multiple completed projects.
+
+STEP 3: Use list_schedule_revisions
+Context: Retrieve schedule revision history to understand actual duration data for tasks, including delays and adjustments that affected completion times.
+Validation: Schedule revision data provides insight into actual task durations and timeline variations from historical projects.
+
+STEP 4: Calculate benchmarks
+Context: Using Claude's statistical analysis capabilities, calculate benchmarks: (1) Average cost by task type, (2) Average duration by task type, (3) Cost/duration by project size, (4) Standard deviation and ranges.
+Validation: Statistical analysis provides reliable averages and ranges for each job type.
+
+STEP 5: Generate benchmark report
+Context: Generate benchmark report showing average costs and durations for each task type, useful for estimating future projects.
+Validation: Report shows clear benchmarks: Task X averages $Y and Z days based on N historical projects.`;
         break;
 
       case 'cost_per_square_foot_report':
-        instructions = `To calculate cost per square foot:
+        instructions = `To break down costs by trade based on square footage, follow these steps:
 
-1. Use get_project_details to get square footage for projects
-2. Use list_transactions to get costs by trade/category
-3. Calculate cost per sqft for each trade: Cost ÷ Total SqFt
-4. ${args?.projectId ? 'Analyze specific project' : 'Compare across multiple projects'}
-5. Format report showing:
-   - Cost per sqft by trade (drywall, lumber, paint, etc.)
-   - Project comparisons
-   - Averages and outliers`;
+STEP 1: Use get_project_details
+Context: Retrieve comprehensive project details including total square footage, project specifications, and metadata for each completed project${args?.projectId ? ` (projectId: ${args.projectId})` : ''}.
+Validation: Project details include square footage data available for cost/sqft calculations.
+
+STEP 2: Use list_transactions
+Context: Get QB transaction data for each project broken down by account/category to get detailed cost breakdown by trade (drywall, lumber, paint, etc.).
+Validation: Transaction data provides costs itemized by trade/material category for each project.
+
+STEP 3: Calculate cost per square foot
+Context: Using Claude's calculation capabilities, calculate cost per square foot for each trade: Trade Cost / Total Square Feet = $/sqft by trade.
+Validation: Cost per sqft calculated for each trade across projects.
+
+STEP 4: Generate comparative analysis
+Context: Compare cost/sqft across ${args?.projectId ? 'specific project against averages' : 'multiple projects to identify trends, outliers, and averages'} by trade.
+Validation: Analysis shows which projects had high/low costs per sqft and why.
+
+STEP 5: Format cost/sqft report
+Context: Generate report showing cost breakdown per square foot by trade, with project comparisons and averages.
+Validation: Report clearly shows $/sqft for each trade with project-by-project and average data.`;
         break;
 
       case 'change_order_tracking':
-        instructions = `To track change orders (revised estimates):
+        instructions = `To create and label 'revised estimates' instead of 'change orders' for cost-plus jobs, follow these steps:
 
-1. Use list_cost_revisions to get all estimate changes
-2. Use get_estimate_revision_history for complete audit trail
-3. Use existing action items or create new ones:
-   - create_action_item with ActionTypeId=8 (General Change Order)
-   - Label as "Revised Estimate" for cost-plus jobs
-4. Use create_action_item_cost_change to add structured data
-5. Format tracking showing:
-   - Revision history with dates and amounts
-   - Cumulative impact on budget
-   - Categories affected`;
+STEP 1: Use list_cost_revisions
+Context: Retrieve all cost revisions which represent changes to the original estimate, providing complete revision history per job.
+Validation: Cost revisions retrieved showing all estimate changes with dates, amounts, and categories.
+
+STEP 2: Use get_estimate_revision_history
+Context: Get comprehensive estimate revision history showing progression from original to current estimate with all intermediate changes.
+Validation: Revision history provides complete audit trail of estimate changes over time.
+
+STEP 3: Use create_action_item
+Context: Create general change order action items (ActionTypeId=8) but label them as 'Revised Estimates' in the title/description for cost-plus jobs.
+Validation: Action items created with 'Revised Estimate' terminology appropriate for cost-plus contracts.
+
+STEP 4: Use create_action_item_cost_change
+Context: Add detailed cost change data to track revision amount, category affected, and reason for change in a structured format.
+Validation: Cost change data captured showing specific amounts and categories for the revision.
+
+STEP 5: Generate revised estimate report
+Context: Using Claude's formatting capabilities, generate 'Revised Estimate' reports (avoiding 'change order' language) showing current budget including all approved revisions.
+Validation: Report uses 'Revised Estimate' terminology and shows clear progression from original to current estimate.`;
         break;
 
       case 'upgrade_pricing':
-        instructions = `To price client upgrades:
+        instructions = `To price out client upgrade requests and revise estimate accordingly, follow these steps:
 
-Required: projectId="${args?.projectId || 'PROJECT_ID'}", upgradeItems="${args?.upgradeItems || 'ITEM_DESCRIPTION'}"
+Required Arguments:
+- projectId: ${args?.projectId || 'PROJECT_ID'}
+- upgradeItems: ${args?.upgradeItems || 'ITEM_DESCRIPTION (e.g., "granite countertops upgrade from laminate")'}
 
-1. Use get_proposal_template_pricing to get standard baseline costs
-2. Calculate upgrade differential:
-   - Upgrade cost - Standard cost + Additional labor
-3. Use create_action_item with ActionTypeId=1 (Cost Change)
-4. Use create_action_item_cost_change to add upgrade details
-5. Use list_clients to get client info for delivery
-6. Format revised estimate showing:
-   - Original estimate
-   - Upgrade costs itemized
-   - New total`;
+STEP 1: Use get_proposal_template_pricing
+Context: Access standard pricing templates to get baseline costs for common upgrade categories (fixtures, materials, features) with predefined rates and line items.
+Validation: Template pricing data retrieved showing standard rates for common upgrade categories.
+
+STEP 2: Calculate upgrade cost
+Context: Using Claude's calculation capabilities, calculate upgrade cost differential: (Upgrade Item Cost - Standard Item Cost) + Additional Labor + Installation Differences = Net Upgrade Cost. Use the standard and upgrade options specified in the prompt.
+Validation: Upgrade pricing calculated showing incremental cost vs. standard option for the items specified in the request.
+
+STEP 3: Use create_action_item (Cost Change)
+Context: Create cost change action item (ActionTypeId=1) documenting the upgrade request, the items being upgraded (from prompt), and the cost impact on the estimate.
+Validation: Cost change action item created with upgrade details (item names, quantities) and pricing from the calculation.
+
+STEP 4: Use create_action_item_cost_change
+Context: Add cost change data to the action item specifying the upgrade amount calculated and the affected estimate category (fixtures, materials, labor, etc.).
+Validation: Cost change data added showing upgrade amount and the specific estimate category being affected.
+
+STEP 5: Use list_clients
+Context: Get client information for the client/project specified in the prompt to send the revised estimate with upgrade pricing.
+Validation: Client contact info retrieved for delivering the revised estimate with upgrade pricing.
+
+STEP 6: Generate revised estimate
+Context: Using Claude's report generation capabilities, generate revised estimate incorporating the approved upgrade pricing, showing the original estimate, upgrade costs, and new total. Include itemized breakdown of upgrades.
+Validation: Updated estimate shows new total with upgrade(s) itemized, making it clear what changed from the original estimate.`;
         break;
 
       case 'update_schedule':
-        instructions = `To update project schedule:
+        instructions = `To extend or adjust project schedule by specified number of days due to delays, follow these steps:
 
-Required: projectName="${args?.projectName || 'PROJECT_NAME'}", numberOfDays=${args?.numberOfDays || 'DAYS'}, reason="${args?.reason || 'REASON'}"
+Required Arguments:
+- projectName: ${args?.projectName || 'PROJECT_NAME'}
+- numberOfDays: ${args?.numberOfDays || 'NUMBER_OF_DAYS'}
+- reason: ${args?.reason || 'REASON (e.g., painting, plumbing, weather, material delivery)'}
 
-1. Use list_project_schedules to find the project schedule
-2. Use list_project_schedule_tasks to identify specific tasks
-   ${args?.taskName ? `- Look for task: "${args.taskName}"` : '- If no specific task, extend all tasks'}
-3. Create schedule change documentation:
-   - create_action_item with ActionTypeId=2 (Schedule Change)
-   - Include ScheduleChange object with NoOfDays and ConstructionTaskId
-4. NOTE: API endpoint exists for updating tasks but not yet in MCP
-   - For now, document the change with action items
-   - Actual task date updates coming soon`;
+STEP 1: Use list_project_schedules
+Context: First, retrieve all project schedules to identify which project schedule needs to be updated based on the user's prompt (project name or identifier). This gives us the schedule IDs available in the system.
+Validation: Check that the response contains a list of project schedules with their IDs. Look for the specific project mentioned in the user's request.
+
+STEP 2: Use list_project_schedule_tasks
+Context: Now that we have the schedule ID, get all the tasks within that schedule. Look for tasks related to the specific trade or reason mentioned in the prompt (e.g., painting, plumbing, electrical, etc.) that need to be delayed.
+Validation: Verify the response contains construction tasks with their current dates. Identify the specific tasks related to the trade/reason mentioned in the user's request.
+
+STEP 3: Use create_action_item (Schedule Change)
+Context: Create a schedule change action item to document the schedule adjustment. Use ActionTypeId=2 (Schedule Change) with ScheduleChange object specifying NoOfDays=[from prompt] and the ConstructionTaskId from step 2. Include the reason for delay in the description.
+Validation: Confirm the action item was created successfully with ActionTypeId=2, and the ScheduleChange object shows the correct number of days specified in the prompt. Check that the action item includes the correct task ID and reason.
+
+NOTE: The API endpoint PUT /api/v1/projectscheduletasks/:id exists for actually updating task dates, but it's not yet exposed as an MCP tool. For now, document the change with action items. Actual task date updates coming soon!`;
         break;
 
       case 'missed_action_items_alert':
-        instructions = `To identify overdue action items:
+        instructions = `To alert for unprocessed action items older than 24 hours, follow these steps:
 
-1. Use list_action_items to get all action items
-2. Filter to items created more than ${args?.hoursThreshold || '24'} hours ago
-   - Status = 1 (Open) or 2 (In Progress)
-3. Use get_action_item for details on each old item
-4. Format alert showing:
-   - List of overdue items with age
-   - Assigned personnel
-   - Priority/urgency indicators
-5. Consider creating reminder action items for critical items`;
+STEP 1: Use list_action_items
+Context: Retrieve all action items to analyze their creation dates and current status.
+Validation: All action items returned with DateCreated and Status fields.
+
+STEP 2: Filter by date and status
+Context: Using Claude's date filtering capabilities, filter action items to find those created more than ${args?.hoursThreshold || '24'} hours ago that still have Status=1 (Open) or Status=2 (In Progress) without recent updates.
+Validation: Filtered list shows only unprocessed action items older than ${args?.hoursThreshold || '24'} hours.
+
+STEP 3: Use get_action_item
+Context: For each old unprocessed item, get full details including comments to understand if there's been any activity.
+Validation: Full action item data shows whether item is truly stagnant or has recent activity in comments.
+
+STEP 4: Generate alert notification
+Context: Using Claude's analysis capabilities, send alert notifications (formatted report) about unprocessed action items to responsible supervisors/managers.
+Validation: Alerts formatted listing overdue action items with appropriate detail.
+
+STEP 5: Format missed items report
+Context: Generate daily report of all missed/overdue action items for management review.
+Validation: Report shows actionable list of items requiring attention with age and assigned personnel.`;
         break;
 
       case 'blind_spots_report':
-        instructions = `To identify potential blind spots:
+        instructions = `To summarize critical company updates or issues the owner might not be aware of, follow these steps:
 
-1. Use list_action_items to get all recent action items
-2. Use get_action_item_cost_change to review budget overruns
-3. Use get_action_item_schedule_change to identify cumulative delays
-4. Analyze patterns indicating blind spots:
-   - Recurring problems not being addressed
-   - Cumulative small issues becoming big problems
-   - Communication gaps
-   - Unreported delays/overruns
-5. Format executive summary with:
-   - Critical issues needing attention
-   - Trends and patterns
-   - Recommendations`;
+STEP 1: Use list_action_items
+Context: Analyze all recent action items to identify critical issues, cost changes, and schedule delays.
+Validation: Action items show potential problem areas and critical updates.
+
+STEP 2: Use get_action_item_cost_change
+Context: Review all cost changes to identify budget overruns that may not have been escalated to owner.
+Validation: Cost changes reveal budget issues that need owner attention.
+
+STEP 3: Use get_action_item_schedule_change
+Context: Review schedule changes to identify cumulative delays across projects.
+Validation: Schedule changes show project timeline issues needing escalation.
+
+STEP 4: Analyze blind spot patterns
+Context: Using Claude's pattern recognition capabilities, identify patterns and issues that may indicate blind spots: (1) Recurring problems not being addressed, (2) Cumulative small issues becoming big problems, (3) Communication gaps, (4) Unreported delays/overruns.
+Validation: Analysis identifies potential blind spots and areas requiring owner awareness.
+
+STEP 5: Generate executive summary
+Context: Generate executive summary report highlighting critical issues, trends, and recommendations that owner should be aware of.
+Validation: Concise report provides owner with visibility into potential blind spots and action needed.`;
         break;
 
       case 'generate_job_status_report':
-        instructions = `To generate job status report:
+        instructions = `To sort conversations by job and create weekly status reports, follow these steps:
 
-1. Use list_action_items ${args?.projectId ? `filtered by projectId` : 'for all projects'}
-   - Filter to last ${args?.days || '7'} days
-2. Use list_action_item_comments for key items to understand discussions
-3. Group by project showing:
-   - What work was discussed
-   - What was completed
-   - What's pending
-   - Key decisions made
-4. Format as structured status report`;
+STEP 1: Use list_action_items
+Context: Get all action items ${args?.projectId ? `for projectId: ${args.projectId}` : 'for each project'} from the past ${args?.days || '7'} days to supplement the conversation data with actual work items and their status.
+Validation: Action items are returned grouped by project, showing what work was discussed and completed.
+
+STEP 2: Use list_action_item_comments
+Context: For key action items, retrieve the comment threads to understand the conversation flow and decisions made.
+Validation: Comments provide context and timeline of discussions for each action item.
+
+STEP 3: Analyze and group by project
+Context: Using Claude's grouping and analysis capabilities, group action items and their comments by project/job to understand the weekly activity for each job.
+Validation: Data is organized by project showing weekly work progression.
+
+STEP 4: Generate job status report
+Context: Using Claude's report formatting capabilities, apply a structured status report format showing for each job: (1) What work was discussed, (2) What was completed, (3) What's pending, (4) Key decisions made.
+Validation: Each job has a formatted status report following the structure with all relevant information included.`;
         break;
 
       case 'plan_analysis':
-        instructions = `To analyze building plans:
+        instructions = `To analyze building plans and generate quantity takeoffs (count doors, windows, cabinets, calculate sqft), follow these steps:
 
-Note: As Claude, I can analyze uploaded images and PDFs directly!
+IMPORTANT: As Claude, I have native vision capabilities and can directly analyze uploaded images and PDFs!
 
-For plan: ${args?.planDescription || 'PLAN_DESCRIPTION'}
+Plan Description: ${args?.planDescription || 'PLAN_DESCRIPTION'}
 
-Steps:
-1. If user provides image/PDF, use native vision capabilities to analyze
-2. Count elements: doors, windows, cabinets, fixtures
-3. Measure dimensions and calculate square footage
-4. Generate quantity takeoffs with counts by type/size
-5. Convert to material estimates using standard formulas
-6. Format comprehensive takeoff report
+STEP 1: Request plan upload
+Context: Ask the user to upload the building plan files (PDF, images like PNG/JPG, or CAD exports). Explain that Claude can analyze these directly using built-in vision capabilities.
+Validation: User provides plan image or PDF file.
 
-Ask user to upload the plan image or PDF file!`;
+STEP 2: Analyze plans with vision
+Context: Using Claude's native vision capabilities, analyze the uploaded plan to identify architectural elements: doors, windows, cabinets, rooms, dimensions. Look for symbols, labels, and scale indicators.
+Validation: AI successfully identifies and counts major plan elements from the visual analysis.
+
+STEP 3: Generate quantity takeoffs
+Context: Count and categorize elements found in the plans: (1) Doors by type/size, (2) Windows by type/size, (3) Linear feet of cabinets, (4) Square footage by room, (5) Other fixtures and finishes.
+Validation: Detailed quantity takeoff showing counts and measurements of all elements.
+
+STEP 4: Convert to material estimates
+Context: Using Claude's calculation capabilities and standard construction formulas, convert quantity takeoffs into material estimates (e.g., sqft of drywall, linear feet of trim, etc.).
+Validation: Material quantities calculated based on plan measurements.
+
+STEP 5: Format takeoff report
+Context: Generate comprehensive takeoff report showing all quantities, measurements, and preliminary material estimates organized by category.
+Validation: Report provides complete quantity takeoff ready for pricing/estimating.`;
         break;
 
       default:
