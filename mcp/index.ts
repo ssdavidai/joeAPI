@@ -53,18 +53,18 @@ const tools: Tool[] = [
   // ===== WORKFLOW DISCOVERY =====
   {
     name: 'find_workflow',
-    description: 'ALWAYS USE THIS FIRST! Search for pre-built workflow prompts that match your task. Returns workflow names and instructions. Much better than using individual tools directly because workflows combine multiple tools in the correct sequence with proper analysis.',
+    description: 'ALWAYS USE THIS FIRST! Discover pre-built workflow prompts for construction management tasks. With autoExecute=false, returns ALL 18 available workflows for you to review and choose from. With autoExecute=true and a specific workflow name, returns the full step-by-step instructions. Workflows are MUCH better than using individual tools because they combine multiple tools in the correct sequence with proper context and validation.',
     annotations: { category: 'Workflows', subcategory: 'Discovery' },
     inputSchema: {
       type: 'object',
       properties: {
         task: {
           type: 'string',
-          description: 'Description of what you want to accomplish (e.g., "generate WIP report", "track budget", "price upgrades")'
+          description: 'Either: (1) A general task description to see all workflows (e.g., "financial reports"), OR (2) A specific workflow name to get instructions (e.g., "work_in_process_report")'
         },
         autoExecute: {
           type: 'boolean',
-          description: 'If true, automatically returns the full workflow instructions. If false, just returns matching workflow names. Default: true',
+          description: 'If false, returns list of ALL workflows to review. If true, returns full instructions for the specified workflow. Default: true',
         },
       },
       required: ['task'],
@@ -1523,55 +1523,30 @@ Validation: Report provides complete quantity takeoff ready for pricing/estimati
         case 'find_workflow': {
           const { task, autoExecute = true } = args as { task: string; autoExecute?: boolean };
 
-          // Search prompts for matches based on task description with scoring
-          const taskLower = task.toLowerCase();
-          const scoredMatches = prompts.map(p => {
-            const nameLower = p.name.toLowerCase().replace(/_/g, ' ');
-            const descLower = p.description.toLowerCase();
-            let score = 0;
+          // Return ALL workflows to Claude and let Claude choose the most relevant one
+          // This is better than keyword matching because Claude can understand context and nuance
 
-            // Score based on exact name match
-            if (taskLower.includes(nameLower)) score += 100;
-
-            // Score based on words from prompt name appearing in task
-            const nameWords = nameLower.split(' ').filter(w => w.length > 3);
-            const taskWords = taskLower.split(' ').filter(w => w.length > 3);
-            nameWords.forEach(word => {
-              if (taskLower.includes(word)) score += 10;
-            });
-
-            // Score based on words from task appearing in prompt name or description
-            taskWords.forEach(word => {
-              if (nameLower.includes(word)) score += 8;
-              if (descLower.includes(word)) score += 5;
-            });
-
-            return { prompt: p, score };
-          })
-          .filter(m => m.score > 0)
-          .sort((a, b) => b.score - a.score);
-
-          const matches = scoredMatches.map(m => m.prompt);
-
-          if (matches.length === 0) {
+          if (!autoExecute) {
+            // Return list of all workflows for Claude to review
             result = {
-              found: false,
-              message: `No workflow found for "${task}". Available workflows: ${prompts.map(p => p.name).join(', ')}`,
-              availableWorkflows: prompts.map(p => ({ name: p.name, description: p.description })),
-            };
-          } else if (!autoExecute) {
-            result = {
-              found: true,
-              matches: matches.map(p => ({
+              task: task,
+              message: `Here are all ${prompts.length} available workflow prompts. Review them and choose the most relevant one for the task: "${task}"`,
+              availableWorkflows: prompts.map(p => ({
                 name: p.name,
                 description: p.description,
                 arguments: p.arguments
               })),
-              message: `Found ${matches.length} matching workflow(s). Use get_prompt with the workflow name to retrieve instructions.`,
+              instruction: "After reviewing, call find_workflow again with autoExecute=true and the exact workflow name in the task parameter (e.g., task='work_in_process_report')."
             };
           } else {
-            // Auto-execute: get the first/best match and return its instructions
-            const bestMatch = matches[0];
+            // Check if task matches a specific workflow name (exact or close match)
+            const taskLower = task.toLowerCase().replace(/[_\s-]/g, '');
+            const matchedPrompt = prompts.find(p => {
+              const nameLower = p.name.toLowerCase().replace(/[_\s-]/g, '');
+              return nameLower === taskLower || taskLower.includes(nameLower) || nameLower.includes(taskLower);
+            });
+
+            const bestMatch = matchedPrompt || prompts[0]; // Fallback to first if no match
 
             // Build instructions for the matched workflow (reuse GetPromptRequestSchema logic)
             let instructions = '';
