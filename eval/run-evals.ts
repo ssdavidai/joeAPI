@@ -33,6 +33,7 @@ interface TestPrompt {
 interface EvalConfig {
   endpoint: string;
   apiKey?: string;
+  model?: string;
   runsPerPrompt: number;
   maxConcurrentRuns: number;
 }
@@ -187,25 +188,227 @@ class EvalRunner {
   }
 
   /**
-   * Call the evaluation endpoint
-   * TODO: Implement this based on your specific endpoint
+   * Call the evaluation endpoint using OpenRouter with MCP tools
    */
   private async callEndpoint(prompt: string): Promise<any> {
-    // PLACEHOLDER: You'll need to implement this
-    // This should call your Claude/MCP endpoint and return the response with traces
+    const messages: any[] = [
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ];
 
-    throw new Error('callEndpoint not implemented - you need to define the endpoint');
+    const toolCalls: ToolCall[] = [];
+    let iterations = 0;
+    const maxIterations = 20; // Prevent infinite loops
 
-    // Example implementation:
-    // const response = await fetch(this.config.endpoint, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${this.config.apiKey}`,
-    //   },
-    //   body: JSON.stringify({ prompt }),
-    // });
-    // return response.json();
+    // Tool calling loop
+    while (iterations < maxIterations) {
+      iterations++;
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.config.apiKey}`,
+          'HTTP-Referer': 'https://github.com/ssdavidai/joeapi',
+          'X-Title': 'JoeAPI Eval System',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: this.config.model || 'anthropic/claude-3.5-sonnet',
+          messages,
+          tools: this.getMCPTools(),
+          tool_choice: 'auto',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter API error: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      const choice = data.choices[0];
+      const message = choice.message;
+
+      // Add assistant message to conversation
+      messages.push(message);
+
+      // Check if there are tool calls
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        // Record tool calls
+        for (const toolCall of message.tool_calls) {
+          toolCalls.push({
+            name: toolCall.function.name,
+            timestamp: new Date().toISOString(),
+            arguments: JSON.parse(toolCall.function.arguments),
+          });
+
+          // Execute the tool call via JoeAPI
+          const toolResult = await this.executeMCPTool(
+            toolCall.function.name,
+            JSON.parse(toolCall.function.arguments)
+          );
+
+          // Add tool result to conversation
+          messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(toolResult),
+          });
+        }
+      } else {
+        // No more tool calls, conversation complete
+        break;
+      }
+    }
+
+    return {
+      trace: toolCalls,
+      finalMessage: messages[messages.length - 1],
+      iterations,
+    };
+  }
+
+  /**
+   * Get MCP tools in OpenAI function calling format
+   */
+  private getMCPTools(): any[] {
+    // This would need to be loaded from your MCP server
+    // For now, return a subset of critical tools
+    // TODO: Load this from the actual MCP server tools list
+    return [
+      {
+        type: 'function',
+        function: {
+          name: 'list_project_managements',
+          description: 'List all project management records with pagination and filters',
+          parameters: {
+            type: 'object',
+            properties: {
+              page: { type: 'number' },
+              limit: { type: 'number' },
+              status: { type: 'string' },
+            },
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'list_project_schedule_tasks',
+          description: 'List project schedule tasks',
+          parameters: {
+            type: 'object',
+            properties: {
+              scheduleId: { type: 'string' },
+              page: { type: 'number' },
+              limit: { type: 'number' },
+            },
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'list_action_items',
+          description: 'List action items with filters',
+          parameters: {
+            type: 'object',
+            properties: {
+              projectId: { type: 'string' },
+              actionTypeId: { type: 'number' },
+              page: { type: 'number' },
+              limit: { type: 'number' },
+            },
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'list_transactions',
+          description: 'List QuickBooks transactions',
+          parameters: {
+            type: 'object',
+            properties: {
+              classId: { type: 'string' },
+              startDate: { type: 'string' },
+              endDate: { type: 'string' },
+              page: { type: 'number' },
+              limit: { type: 'number' },
+            },
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'list_job_balances',
+          description: 'List job balances for projects',
+          parameters: {
+            type: 'object',
+            properties: {
+              page: { type: 'number' },
+              limit: { type: 'number' },
+            },
+          },
+        },
+      },
+      // Add more tools as needed...
+    ];
+  }
+
+  /**
+   * Execute an MCP tool by calling the JoeAPI endpoint
+   */
+  private async executeMCPTool(toolName: string, args: any): Promise<any> {
+    const apiEndpoint = this.config.endpoint || 'https://joeapi.fly.dev';
+
+    // Map MCP tool names to API endpoints
+    const endpointMap: { [key: string]: string } = {
+      'list_project_managements': '/api/v1/projectmanagements',
+      'list_project_schedule_tasks': '/api/v1/projectscheduletasks',
+      'list_action_items': '/api/v1/actionitems',
+      'list_transactions': '/api/v1/transactions',
+      'list_job_balances': '/api/v1/job-balances',
+      'list_estimates': '/api/v1/estimates',
+      'list_cost_revisions': '/api/v1/cost-revisions',
+      'list_deposits': '/api/v1/deposits',
+      'list_invoices': '/api/v1/invoices',
+      'list_clients': '/api/v1/clients',
+      'list_proposals': '/api/v1/proposals',
+      'list_proposal_lines': '/api/v1/proposallines',
+      'get_cost_variance': '/api/v1/cost-variance',
+      'get_project_details': '/api/v1/project-details',
+      'get_proposal_pipeline': '/api/v1/proposal-pipeline',
+      // Add more mappings as needed...
+    };
+
+    const endpoint = endpointMap[toolName];
+    if (!endpoint) {
+      return { error: `Unknown tool: ${toolName}` };
+    }
+
+    // Build query string from args
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(args)) {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    }
+
+    const url = `${apiEndpoint}${endpoint}?${queryParams.toString()}`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        return { error: `API error: ${response.status}` };
+      }
+      return await response.json();
+    } catch (error: any) {
+      return { error: error.message };
+    }
   }
 
   /**
@@ -461,19 +664,19 @@ class EvalRunner {
 
 // Main execution
 async function main() {
-  // TODO: Configure your endpoint here
   const config: EvalConfig = {
-    endpoint: process.env.EVAL_ENDPOINT || 'PLACEHOLDER',
-    apiKey: process.env.EVAL_API_KEY,
+    endpoint: process.env.EVAL_ENDPOINT || 'https://joeapi.fly.dev',
+    apiKey: process.env.EVAL_API_KEY || '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',
+    model: process.env.EVAL_MODEL || 'anthropic/claude-3.5-sonnet',
     runsPerPrompt: parseInt(process.env.RUNS_PER_PROMPT || '10'),
     maxConcurrentRuns: parseInt(process.env.MAX_CONCURRENT || '3'),
   };
 
-  if (config.endpoint === 'PLACEHOLDER') {
-    console.error('ERROR: You must set EVAL_ENDPOINT environment variable');
-    console.error('Example: export EVAL_ENDPOINT="https://your-endpoint.com/chat"');
-    process.exit(1);
-  }
+  console.log('Configuration:');
+  console.log(`  API Endpoint: ${config.endpoint}`);
+  console.log(`  Model: ${config.model}`);
+  console.log(`  Runs per prompt: ${config.runsPerPrompt}`);
+  console.log(`  API Key: ${config.apiKey?.substring(0, 20)}...`);
 
   const runner = new EvalRunner(config);
   await runner.runAll();
