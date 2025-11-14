@@ -1,5 +1,7 @@
 # JoeAPI - Construction Management REST API
 
+[![smithery badge](https://smithery.ai/badge/@ssdavidai/joeapi)](https://smithery.ai/server/@ssdavidai/joeapi)
+
 REST API for construction management system built on chaconstruction-test MSSQL database.
 
 ## Project Status
