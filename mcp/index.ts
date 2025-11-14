@@ -1523,17 +1523,35 @@ Validation: Report provides complete quantity takeoff ready for pricing/estimati
         case 'find_workflow': {
           const { task, autoExecute = true } = args as { task: string; autoExecute?: boolean };
 
-          // Search prompts for matches based on task description
+          // Search prompts for matches based on task description with scoring
           const taskLower = task.toLowerCase();
-          const matches = prompts.filter(p => {
+          const scoredMatches = prompts.map(p => {
             const nameLower = p.name.toLowerCase().replace(/_/g, ' ');
             const descLower = p.description.toLowerCase();
+            let score = 0;
 
-            // Check if task mentions any keywords from the prompt name or description
-            return nameLower.split(' ').some(word => taskLower.includes(word)) ||
-                   descLower.split(' ').some(word => word.length > 4 && taskLower.includes(word)) ||
-                   taskLower.split(' ').some(word => word.length > 4 && (nameLower.includes(word) || descLower.includes(word)));
-          });
+            // Score based on exact name match
+            if (taskLower.includes(nameLower)) score += 100;
+
+            // Score based on words from prompt name appearing in task
+            const nameWords = nameLower.split(' ').filter(w => w.length > 3);
+            const taskWords = taskLower.split(' ').filter(w => w.length > 3);
+            nameWords.forEach(word => {
+              if (taskLower.includes(word)) score += 10;
+            });
+
+            // Score based on words from task appearing in prompt name or description
+            taskWords.forEach(word => {
+              if (nameLower.includes(word)) score += 8;
+              if (descLower.includes(word)) score += 5;
+            });
+
+            return { prompt: p, score };
+          })
+          .filter(m => m.score > 0)
+          .sort((a, b) => b.score - a.score);
+
+          const matches = scoredMatches.map(m => m.prompt);
 
           if (matches.length === 0) {
             result = {
