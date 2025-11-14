@@ -1,0 +1,184 @@
+{
+  "prompts": [
+    {
+      "workflow": "work_in_process_report",
+      "humanPrompts": [
+        "show me all the jobs we're working on right now",
+        "what's the status of our current projects?",
+        "give me a WIP report",
+        "which projects are active and how are they doing",
+        "i need to see where we stand on all ongoing work"
+      ]
+    },
+    {
+      "workflow": "detailed_budget_tracking",
+      "humanPrompts": [
+        "how much are we over budget on the Smith project?",
+        "is the Johnson house under or over budget?",
+        "show me the budget variance for project ABC-123",
+        "what's our cost situation on the Martinez remodel",
+        "are we on budget for the downtown renovation?"
+      ]
+    },
+    {
+      "workflow": "deposit_tracking",
+      "humanPrompts": [
+        "how much deposit do we have left for the Anderson job?",
+        "what's the current balance on the retainer for project XYZ?",
+        "check the deposit status on the Williams project",
+        "how much of the deposit have we used on the Brown house",
+        "show me the deposit balance for the Patel remodel"
+      ]
+    },
+    {
+      "workflow": "cost_to_estimate_report",
+      "humanPrompts": [
+        "compare our actual costs to the estimate on the Thompson job",
+        "how do the real costs compare to what we quoted?",
+        "show me cost vs estimate for the Garcia renovation",
+        "are we tracking with our original bid on the Miller house",
+        "what's the variance between estimate and actual on the Lee project"
+      ]
+    },
+    {
+      "workflow": "receivables_report",
+      "humanPrompts": [
+        "who owes us money right now?",
+        "show me outstanding invoices and fees",
+        "what supervision fees haven't been collected yet",
+        "which clients have unpaid balances",
+        "give me a receivables summary"
+      ]
+    },
+    {
+      "workflow": "gross_receipts_forecast",
+      "humanPrompts": [
+        "what revenue are we expecting next month?",
+        "forecast our gross receipts for the next 30 days",
+        "how much money should be coming in soon",
+        "project our income for the upcoming month",
+        "what's our revenue forecast looking like"
+      ]
+    },
+    {
+      "workflow": "job_queue_summary",
+      "humanPrompts": [
+        "show me our pipeline - what's in the queue vs active",
+        "how many jobs do we have waiting to start?",
+        "give me a summary of our project pipeline",
+        "what's coming up and what are we working on now",
+        "show me all projects from quotes to active"
+      ]
+    },
+    {
+      "workflow": "projected_income",
+      "humanPrompts": [
+        "estimate our monthly income from current proposals",
+        "what revenue can we expect from active bids?",
+        "project income based on our open proposals",
+        "how much could we make if these quotes get accepted",
+        "forecast income from pending estimates"
+      ]
+    },
+    {
+      "workflow": "revised_estimate_analysis",
+      "humanPrompts": [
+        "show me how many times we've revised estimates",
+        "analyze our estimate change history",
+        "what's our average cost overrun on revised bids",
+        "track how our estimates have changed over time",
+        "show me the revision history on our estimates"
+      ]
+    },
+    {
+      "workflow": "job_benchmarking",
+      "humanPrompts": [
+        "what's the average cost for kitchen remodels we've done?",
+        "benchmark our bathroom renovation costs and timelines",
+        "show me historical data for similar projects",
+        "how long do additions usually take us?",
+        "what do we typically spend on master suite remodels"
+      ]
+    },
+    {
+      "workflow": "cost_per_square_foot_report",
+      "humanPrompts": [
+        "break down the cost per square foot on the Davis project",
+        "what's our sqft cost by trade on the new build",
+        "show me per-square-foot pricing for the addition",
+        "analyze cost per sqft broken down by category",
+        "give me a sqft cost breakdown for the expansion"
+      ]
+    },
+    {
+      "workflow": "change_order_tracking",
+      "humanPrompts": [
+        "track all the change orders on the Rodriguez job",
+        "show me cost revisions for the cost-plus project",
+        "what change orders have we issued on this job",
+        "give me the complete revision history with changes",
+        "track how the budget has evolved on this project"
+      ]
+    },
+    {
+      "workflow": "upgrade_pricing",
+      "humanPrompts": [
+        "the client wants upgraded cabinets - what's the price difference?",
+        "price out switching to quartz countertops",
+        "how much more for luxury vinyl instead of carpet",
+        "what would it cost to upgrade the light fixtures",
+        "quote the client on upgrading to hardwood floors"
+      ]
+    },
+    {
+      "workflow": "update_schedule",
+      "humanPrompts": [
+        "push the schedule back 3 days for the plumbing delay on the Chen house",
+        "we need to extend the Martinez project by a week due to electrical issues",
+        "delay the schedule 5 days because of material delivery problems",
+        "adjust the timeline forward 2 days - painting is running behind",
+        "the HVAC is delayed, push everything back 4 days"
+      ]
+    },
+    {
+      "workflow": "missed_action_items_alert",
+      "humanPrompts": [
+        "what action items are overdue?",
+        "show me tasks that haven't been completed on time",
+        "which action items are past their deadline",
+        "alert me to any late or missed items",
+        "what's fallen through the cracks in the last couple days"
+      ]
+    },
+    {
+      "workflow": "blind_spots_report",
+      "humanPrompts": [
+        "what am I missing? show me critical issues",
+        "are there any problems I should know about",
+        "identify blind spots that need my attention",
+        "what issues are flying under the radar",
+        "show me things that might become bigger problems"
+      ]
+    },
+    {
+      "workflow": "generate_job_status_report",
+      "humanPrompts": [
+        "create a weekly status report for the Wilson project",
+        "what work was done this week on the Taylor house",
+        "summarize the week's progress on this job",
+        "generate a status update for the owner meeting",
+        "give me a weekly report showing completed and pending work"
+      ]
+    },
+    {
+      "workflow": "plan_analysis",
+      "humanPrompts": [
+        "analyze these floor plans and count the doors and windows",
+        "do a takeoff from the plans - how many cabinets",
+        "calculate square footage from the building plans",
+        "count fixtures and outlets from the drawings",
+        "extract quantities from these architectural plans"
+      ]
+    }
+  ]
+}

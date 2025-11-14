@@ -1,0 +1,451 @@
+{
+  "work_in_process_report": {
+    "name": "work_in_process_report",
+    "totalSteps": 5,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_project_managements",
+        "context": "Retrieve all active projects to determine which jobs are currently in process.",
+        "validation": "Active projects list showing current status of each job."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_project_schedule_tasks",
+        "context": "For each active project, get the construction tasks to see which tasks are completed, in progress, and upcoming.",
+        "validation": "Task lists show completion status and provide insight into work progress."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_action_items",
+        "context": "Get all action items for active projects, particularly cost changes and schedule changes that indicate work adjustments.",
+        "validation": "Action items show recent changes, issues, and adjustments to the work in process."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "list_transactions",
+        "context": "Access QB transaction data to determine actual costs incurred on each work-in-process job, filtered by project ClassID to get spending to date.",
+        "validation": "Transaction data shows actual costs spent on each WIP project by category (labor, materials, subcontractors)."
+      },
+      {
+        "stepNumber": 5,
+        "tool": "list_job_balances",
+        "context": "Get current job balance for each WIP project showing the financial position (balance owed or credit available).",
+        "validation": "Job balances provide current financial status for each work-in-process project."
+      }
+    ]
+  },
+  "detailed_budget_tracking": {
+    "name": "detailed_budget_tracking",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_estimates",
+        "context": "Get the original estimate/budget for the specific job${args?.projectId ? ` (projectId: ${args.projectId})` : ''}.",
+        "validation": "Original budget retrieved with breakdown by category."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_cost_revisions",
+        "context": "Retrieve all cost revisions for the job to get complete history of budget adjustments.",
+        "validation": "All budget adjustments retrieved with dates, amounts, and categories."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_transactions",
+        "context": "Get QB transaction data filtered by project ClassID to retrieve actual costs spent on the job to date, broken down by account/category.",
+        "validation": "Actual costs show all expenditures by category (labor, materials, subcontractors, etc.)."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "get_cost_variance",
+        "context": "Calculate budget variance showing: (1) Original estimate, (2) Revised estimate with all changes, (3) Actual costs to date, (4) Variance amount and percentage over/under budget.",
+        "validation": "Report shows job is $X over budget (Y% over revised budget) with detailed variance by category."
+      }
+    ]
+  },
+  "deposit_tracking": {
+    "name": "deposit_tracking",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_deposits",
+        "context": "Access deposit/retainer tracking to get initial owner deposits for each job/project${args?.projectId ? ` (filter by projectId: ${args.projectId})` : ''}, including deposit amounts and usage to date.",
+        "validation": "Deposit records show initial deposit amounts, amounts used, and current balances for all projects."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "get_deposit_by_project",
+        "context": "${args?.projectId ? `Get detailed deposit information for projectId: ${args.projectId}` : 'For each project, get detailed deposit information'}, showing initial deposit, all draws/payments made against it, and remaining balance.",
+        "validation": "Detailed deposit data shows complete payment history and current balance for the project."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_transactions",
+        "context": "Retrieve QB transactions filtered by deposit/retainer accounts to see detailed payment history and draws made against deposits.",
+        "validation": "Transaction history shows all amounts withdrawn from deposit accounts with dates and descriptions."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "list_project_managements",
+        "context": "Get project information to associate deposits with specific jobs and clients for comprehensive reporting.",
+        "validation": "Project data provides context linking deposits to job details and client information."
+      }
+    ]
+  },
+  "cost_to_estimate_report": {
+    "name": "cost_to_estimate_report",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_estimates",
+        "context": "Retrieve all estimates to get the original budgeted costs for each project.",
+        "validation": "Estimates show original budget breakdown by category/trade."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_cost_revisions",
+        "context": "Get all cost revisions for each project showing the complete history of budget changes and estimate adjustments.",
+        "validation": "Cost revision history shows all budget modifications with dates, amounts, and reasons."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_transactions",
+        "context": "Retrieve QB transaction data filtered by project to get actual costs incurred to date, broken down by account/category (labor, materials, subcontractors).",
+        "validation": "Transaction data shows actual costs spent on each project by category."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "get_cost_variance",
+        "context": "Calculate cost variance analysis comparing original estimate, revised estimate (with approved changes), and actual costs to date. Shows variance in dollars and percentage over/under budget.",
+        "validation": "Variance report shows for each category: estimated, actual, variance in dollars and percentage."
+      }
+    ]
+  },
+  "receivables_report": {
+    "name": "receivables_report",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_invoices",
+        "context": "Get all invoices from the system to identify outstanding supervision fee invoices and paid invoices for receivables analysis.",
+        "validation": "Invoice data shows amounts, dates, payment status, and aging information for all supervision fees."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_transactions",
+        "context": "Retrieve QB transactions filtered by supervision-related accounts to get payment collection history and calculate total collected to date.",
+        "validation": "Transaction records show all supervision fee payments that have been successfully collected."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_clients",
+        "context": "Get client information to associate receivables with specific clients and their supervision fee arrangements.",
+        "validation": "Client data helps identify who owes supervision fees and their payment history."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "list_job_balances",
+        "context": "Get current job balances to understand the financial position of each project, including amounts owed or credit available.",
+        "validation": "Job balances provide per-project financial status relevant to receivables analysis."
+      }
+    ]
+  },
+  "gross_receipts_forecast": {
+    "name": "gross_receipts_forecast",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_project_managements",
+        "context": "Get all active projects to calculate expected payments based on project completion and payment schedules.",
+        "validation": "Projects returned with completion status and payment milestone information."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_proposals",
+        "context": "Retrieve recently accepted proposals that will generate initial deposits or payments in the coming month.",
+        "validation": "Newly accepted proposals that haven't started yet, representing new deposit income."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_invoices",
+        "context": "Get all invoices to identify payments due in the next month from all active projects, including amounts, dates, and client information.",
+        "validation": "Invoice list shows upcoming payments with due dates within the forecast period."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "list_deposits",
+        "context": "Check deposit/retainer balances to include expected deposit draws and remaining retainer funds available for billing.",
+        "validation": "Deposit data shows available retainer funds and deposit usage patterns for revenue forecasting."
+      }
+    ]
+  },
+  "job_queue_summary": {
+    "name": "job_queue_summary",
+    "totalSteps": 3,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "get_proposal_pipeline",
+        "context": "Get comprehensive pipeline analytics showing all proposals categorized by stage (pending, accepted, in progress, completed) with counts, total values, and timeline information.",
+        "validation": "Pipeline data provides complete breakdown of proposals by stage with financial metrics and timing."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_project_managements",
+        "context": "Retrieve all active projects to count homes currently under construction and verify current work status.",
+        "validation": "Project list shows active construction projects with their current status for verification."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_project_schedules",
+        "context": "Get project schedules to determine which projects are actively being worked on versus scheduled to start soon.",
+        "validation": "Schedules show current vs. upcoming projects based on start dates."
+      }
+    ]
+  },
+  "projected_income": {
+    "name": "projected_income",
+    "totalSteps": 3,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_proposals",
+        "context": "Retrieve all active proposals to calculate potential income from proposals that are likely to be accepted this month.",
+        "validation": "Proposals are returned with their total amounts and current status (pending, accepted, etc.)."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_proposal_lines",
+        "context": "For each proposal, get the detailed line items to understand the breakdown of income sources and payment schedules.",
+        "validation": "Proposal line items show detailed pricing and can be used to calculate payment milestones."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_project_managements",
+        "context": "Get all active projects to determine ongoing income from projects in progress, including percentage complete and remaining payments.",
+        "validation": "Project data includes completion percentages and payment schedules."
+      }
+    ]
+  },
+  "revised_estimate_analysis": {
+    "name": "revised_estimate_analysis",
+    "totalSteps": 3,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_estimates",
+        "context": "Get all estimates to identify the original budget for each job.",
+        "validation": "Estimates list shows original budget amounts by job/project."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "get_estimate_revision_history",
+        "context": "Retrieve complete revision history for each estimate${args?.projectId ? ` (projectId: ${args.projectId})` : ''} showing all changes from original to current, with dates, amounts, and reasons for each revision.",
+        "validation": "Estimate revision history provides complete audit trail of all budget changes per job."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_cost_revisions",
+        "context": "Get detailed cost revision data for all projects to analyze revision patterns, amounts, and categories affected.",
+        "validation": "Cost revision data shows amounts, categories, dates, and cumulative impact for each job."
+      }
+    ]
+  },
+  "job_benchmarking": {
+    "name": "job_benchmarking",
+    "totalSteps": 3,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_project_managements",
+        "context": "Retrieve all completed projects to build historical database for benchmarking.",
+        "validation": "Historical project data includes completion dates and project types."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_transactions",
+        "context": "Access QB transaction history for completed projects broken down by account/category to get actual costs by trade/task type (flooring, framing, insulation, etc.)${args?.jobType ? ` focusing on ${args.jobType}` : ''}.",
+        "validation": "Transaction history shows actual costs by category across multiple completed projects."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "list_schedule_revisions",
+        "context": "Retrieve schedule revision history to understand actual duration data for tasks, including delays and adjustments that affected completion times.",
+        "validation": "Schedule revision data provides insight into actual task durations and timeline variations from historical projects."
+      }
+    ]
+  },
+  "cost_per_square_foot_report": {
+    "name": "cost_per_square_foot_report",
+    "totalSteps": 2,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "get_project_details",
+        "context": "Retrieve comprehensive project details including total square footage, project specifications, and metadata for each completed project${args?.projectId ? ` (projectId: ${args.projectId})` : ''}.",
+        "validation": "Project details include square footage data available for cost/sqft calculations."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_transactions",
+        "context": "Get QB transaction data for each project broken down by account/category to get detailed cost breakdown by trade (drywall, lumber, paint, etc.).",
+        "validation": "Transaction data provides costs itemized by trade/material category for each project."
+      }
+    ]
+  },
+  "change_order_tracking": {
+    "name": "change_order_tracking",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_cost_revisions",
+        "context": "Retrieve all cost revisions which represent changes to the original estimate, providing complete revision history per job.",
+        "validation": "Cost revisions retrieved showing all estimate changes with dates, amounts, and categories."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "get_estimate_revision_history",
+        "context": "Get comprehensive estimate revision history showing progression from original to current estimate with all intermediate changes.",
+        "validation": "Revision history provides complete audit trail of estimate changes over time."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "create_action_item",
+        "context": "Create general change order action items (ActionTypeId=8) but label them as 'Revised Estimates' in the title/description for cost-plus jobs.",
+        "validation": "Action items created with 'Revised Estimate' terminology appropriate for cost-plus contracts."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "create_action_item_cost_change",
+        "context": "Add detailed cost change data to track revision amount, category affected, and reason for change in a structured format.",
+        "validation": "Cost change data captured showing specific amounts and categories for the revision."
+      }
+    ]
+  },
+  "upgrade_pricing": {
+    "name": "upgrade_pricing",
+    "totalSteps": 4,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "get_proposal_template_pricing",
+        "context": "Access standard pricing templates to get baseline costs for common upgrade categories (fixtures, materials, features) with predefined rates and line items.",
+        "validation": "Template pricing data retrieved showing standard rates for common upgrade categories."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "create_action_item (Cost Change)",
+        "context": "Create cost change action item (ActionTypeId=1) documenting the upgrade request, the items being upgraded (from prompt), and the cost impact on the estimate.",
+        "validation": "Cost change action item created with upgrade details (item names, quantities) and pricing from the calculation."
+      },
+      {
+        "stepNumber": 4,
+        "tool": "create_action_item_cost_change",
+        "context": "Add cost change data to the action item specifying the upgrade amount calculated and the affected estimate category (fixtures, materials, labor, etc.).",
+        "validation": "Cost change data added showing upgrade amount and the specific estimate category being affected."
+      },
+      {
+        "stepNumber": 5,
+        "tool": "list_clients",
+        "context": "Get client information for the client/project specified in the prompt to send the revised estimate with upgrade pricing.",
+        "validation": "Client contact info retrieved for delivering the revised estimate with upgrade pricing."
+      }
+    ]
+  },
+  "update_schedule": {
+    "name": "update_schedule",
+    "totalSteps": 3,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_project_schedules",
+        "context": "First, retrieve all project schedules to identify which project schedule needs to be updated based on the user's prompt (project name or identifier). This gives us the schedule IDs available in the system.",
+        "validation": "Check that the response contains a list of project schedules with their IDs. Look for the specific project mentioned in the user's request."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_project_schedule_tasks",
+        "context": "Now that we have the schedule ID, get all the tasks within that schedule. Look for tasks related to the specific trade or reason mentioned in the prompt (e.g., painting, plumbing, electrical, etc.) that need to be delayed.",
+        "validation": "Verify the response contains construction tasks with their current dates. Identify the specific tasks related to the trade/reason mentioned in the user's request."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "create_action_item (Schedule Change)",
+        "context": "Create a schedule change action item to document the schedule adjustment. Use ActionTypeId=2 (Schedule Change) with ScheduleChange object specifying NoOfDays=[from prompt] and the ConstructionTaskId from step 2. Include the reason for delay in the description.",
+        "validation": "Confirm the action item was created successfully with ActionTypeId=2, and the ScheduleChange object shows the correct number of days specified in the prompt. Check that the action item includes the correct task ID and reason."
+      }
+    ]
+  },
+  "missed_action_items_alert": {
+    "name": "missed_action_items_alert",
+    "totalSteps": 2,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_action_items",
+        "context": "Retrieve all action items to analyze their creation dates and current status.",
+        "validation": "All action items returned with DateCreated and Status fields."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "get_action_item",
+        "context": "For each old unprocessed item, get full details including comments to understand if there's been any activity.",
+        "validation": "Full action item data shows whether item is truly stagnant or has recent activity in comments."
+      }
+    ]
+  },
+  "blind_spots_report": {
+    "name": "blind_spots_report",
+    "totalSteps": 3,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_action_items",
+        "context": "Analyze all recent action items to identify critical issues, cost changes, and schedule delays.",
+        "validation": "Action items show potential problem areas and critical updates."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "get_action_item_cost_change",
+        "context": "Review all cost changes to identify budget overruns that may not have been escalated to owner.",
+        "validation": "Cost changes reveal budget issues that need owner attention."
+      },
+      {
+        "stepNumber": 3,
+        "tool": "get_action_item_schedule_change",
+        "context": "Review schedule changes to identify cumulative delays across projects.",
+        "validation": "Schedule changes show project timeline issues needing escalation."
+      }
+    ]
+  },
+  "generate_job_status_report": {
+    "name": "generate_job_status_report",
+    "totalSteps": 2,
+    "steps": [
+      {
+        "stepNumber": 1,
+        "tool": "list_action_items",
+        "context": "Get all action items ${args?.projectId ? `for projectId: ${args.projectId}` : 'for each project'} from the past ${args?.days || '7'} days to supplement the conversation data with actual work items and their status.",
+        "validation": "Action items are returned grouped by project, showing what work was discussed and completed."
+      },
+      {
+        "stepNumber": 2,
+        "tool": "list_action_item_comments",
+        "context": "For key action items, retrieve the comment threads to understand the conversation flow and decisions made.",
+        "validation": "Comments provide context and timeline of discussions for each action item."
+      }
+    ]
+  },
+  "plan_analysis": {
+    "name": "plan_analysis",
+    "totalSteps": 0,
+    "steps": []
+  }
+}
